@@ -1,4 +1,4 @@
-package walerowicz.pawel.SpotifyFun.playlist;
+package walerowicz.pawel.SpotifyFun.playlist.entities;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
@@ -8,7 +8,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 @Data
-class FoundTracksResultPackage {
+public class FoundTracksResultPackage {
     @JsonAlias("href")
     private URI currentURL;
     @JsonAlias("next")
@@ -21,6 +21,10 @@ class FoundTracksResultPackage {
     }
 
     public void setNextURL(String nextURL) throws URISyntaxException {
-        this.nextURL = new URI(nextURL);
+        if(nextURL!=null) this.nextURL = new URI(nextURL);
+    }
+
+    public boolean hasNextURL() {
+        return nextURL!=null;
     }
 }
