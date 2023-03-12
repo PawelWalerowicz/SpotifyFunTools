@@ -79,7 +79,7 @@ class ConcurrentSearchCall implements Callable<Map<String, List<Track>>> {
 
     private List<Track> filterTracks(FoundTracksResultPackage foundTracksResult) {
         return foundTracksResult.getFoundTracks().stream()
-                .filter(track -> track.name().equalsIgnoreCase(query))
+                .filter(track -> track.name().replaceAll("[! .,-]+", " ").equalsIgnoreCase(query))
                 .collect(Collectors.toList());
     }
 

@@ -27,7 +27,7 @@ class ConcurrentRequestProcessor {
         boolean shouldRetry = true;
         Map<String, List<Track>> result = null;
         int retryCount=0;
-        do {
+        do {        //Move it into individual request, not all of them
             try {
                 result = sendRequests(allCallables);
                 shouldRetry = false;
@@ -42,7 +42,7 @@ class ConcurrentRequestProcessor {
     private void waitAndLog() {
         logger.warn("Too many requests occurred. Taking a 30 second break");
         try {
-            Thread.sleep(21_000);
+            Thread.sleep(20_000);
             logger.warn("(just 10 more seconds)");
             Thread.sleep(10_000);
         } catch (InterruptedException e) {
@@ -60,7 +60,7 @@ class ConcurrentRequestProcessor {
         ExecutorService threadPool = Executors.newFixedThreadPool(callables.size());
         Map<String, List<Track>> titles = new HashMap<>();
         try {
-            List<Future<Map<String, List<Track>>>> futures = threadPool.invokeAll(callables, 40, TimeUnit.SECONDS);
+            List<Future<Map<String, List<Track>>>> futures = threadPool.invokeAll(callables, 30, TimeUnit.SECONDS);
             for (Future<Map<String, List<Track>>> future : futures) {
                 titles.putAll(future.get());
             }
