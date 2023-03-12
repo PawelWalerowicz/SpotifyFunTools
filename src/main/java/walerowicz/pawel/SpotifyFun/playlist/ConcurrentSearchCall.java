@@ -2,6 +2,7 @@ package walerowicz.pawel.SpotifyFun.playlist;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -10,33 +11,37 @@ import org.springframework.web.client.RestTemplate;
 import walerowicz.pawel.SpotifyFun.playlist.entities.FoundTracksResultPackage;
 import walerowicz.pawel.SpotifyFun.playlist.entities.SearchResult;
 import walerowicz.pawel.SpotifyFun.playlist.entities.Track;
+import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
-class ConcurrentSearchCall implements Callable<Map<String, List<Track>>> {
+class ConcurrentSearchCall implements Callable<TracksWithPhrase> {
     private final Logger logger = LoggerFactory.getLogger(ConcurrentSearchCall.class);
     private final String query;
     private final String searchForTrackURL;
     final HttpEntity<String> httpEntity;
+    @Value("${spotify.combinator.cleanup.regex}")
+    String cleanupRegex;
 
-    ConcurrentSearchCall(final String query, final String searchForTrackURL, final HttpHeaders headerWithToken) {
+    ConcurrentSearchCall(final String query,
+                         final String searchForTrackURL,
+                         final HttpHeaders headerWithToken
+                         ) {
         this.query = query;
         this.searchForTrackURL = searchForTrackURL;
         this.httpEntity = new HttpEntity<>(null, headerWithToken);
     }
 
     @Override
-    public Map<String, List<Track>> call() throws Exception {
-        return Collections.singletonMap(query, searchForTracks());
+    public TracksWithPhrase call() throws Exception {
+        return new TracksWithPhrase(query, searchForTracks());
     }
 
     private List<Track> searchForTracks() throws URISyntaxException, UnsupportedEncodingException {
@@ -79,7 +84,7 @@ class ConcurrentSearchCall implements Callable<Map<String, List<Track>>> {
 
     private List<Track> filterTracks(FoundTracksResultPackage foundTracksResult) {
         return foundTracksResult.getFoundTracks().stream()
-                .filter(track -> track.name().replaceAll("[! .,-]+", " ").equalsIgnoreCase(query))
+                .filter(track -> track.name().replaceAll("cleanupRegex", " ").equalsIgnoreCase(query))
                 .collect(Collectors.toList());
     }
 

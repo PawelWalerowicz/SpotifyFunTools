@@ -4,11 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import walerowicz.pawel.SpotifyFun.playlist.entities.Track;
+import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
@@ -22,10 +21,10 @@ class ConcurrentRequestProcessor {
         this.concurrentSearchCallFactory = concurrentSearchCallFactory;
     }
 
-    Map<String, List<Track>> sendConcurrentRequests(final List<String> allQueries) {
-        List<Callable<Map<String, List<Track>>>> allCallables = prepareConcurrentRequests(allQueries);
+    List<TracksWithPhrase> sendConcurrentRequests(final List<String> allQueries) {
+        List<Callable<TracksWithPhrase>> allCallables = prepareConcurrentRequests(allQueries);
         boolean shouldRetry = true;
-        Map<String, List<Track>> result = null;
+        List<TracksWithPhrase> result = null;
         int retryCount=0;
         do {        //Move it into individual request, not all of them
             try {
@@ -50,19 +49,19 @@ class ConcurrentRequestProcessor {
         }
     }
 
-    private List<Callable<Map<String, List<Track>>>> prepareConcurrentRequests(final List<String> allQueries) {
+    private List<Callable<TracksWithPhrase>> prepareConcurrentRequests(final List<String> allQueries) {
         return allQueries.stream()
                 .map(concurrentSearchCallFactory::createConcurrentSearchCall)
                 .collect(Collectors.toList());
     }
 
-    private Map<String, List<Track>> sendRequests(final List<Callable<Map<String, List<Track>>>> callables) throws TooManyRequestsException {
+    private List<TracksWithPhrase> sendRequests(final List<Callable<TracksWithPhrase>> callables) throws TooManyRequestsException {
         ExecutorService threadPool = Executors.newFixedThreadPool(callables.size());
-        Map<String, List<Track>> titles = new HashMap<>();
+        List<TracksWithPhrase> titles = new ArrayList<>();
         try {
-            List<Future<Map<String, List<Track>>>> futures = threadPool.invokeAll(callables, 30, TimeUnit.SECONDS);
-            for (Future<Map<String, List<Track>>> future : futures) {
-                titles.putAll(future.get());
+            List<Future<TracksWithPhrase>> futures = threadPool.invokeAll(callables, 30, TimeUnit.SECONDS);
+            for (Future<TracksWithPhrase> future : futures) {
+                titles.add(future.get());
             }
         } catch (ExecutionException e) {
             throw new TooManyRequestsException();

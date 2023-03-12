@@ -9,17 +9,17 @@ import java.net.URISyntaxException;
 
 @Service
 class UserService {
-    final HTTPRequestWrapper httpRequestWrapper;
+    final SpotifyAPIRequest spotifyAPIRequest;
     private final String userProfileURL;
 
     UserService(@Value("${spotify.user.profileURL}") final String userProfileURL,
-                       HTTPRequestWrapper httpRequestWrapper) {
+                       SpotifyAPIRequest spotifyAPIRequest) {
         this.userProfileURL = userProfileURL;
-        this.httpRequestWrapper = httpRequestWrapper;
+        this.spotifyAPIRequest = spotifyAPIRequest;
     }
 
     User importUser() throws URISyntaxException {
-        URI request = new URI(userProfileURL);
-        return httpRequestWrapper.sentGetRequest(request, User.class);
+        URI getUserRequestURI = new URI(userProfileURL);
+        return spotifyAPIRequest.get(getUserRequestURI, User.class);
     }
 }

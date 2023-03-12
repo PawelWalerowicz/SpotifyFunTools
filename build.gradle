@@ -19,6 +19,7 @@ repositories {
 }
 
 dependencies {
+	implementation 'dev.failsafe:failsafe:3.3.0'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.junit.jupiter:junit-jupiter:5.7.0'
     compileOnly 'org.projectlombok:lombok'

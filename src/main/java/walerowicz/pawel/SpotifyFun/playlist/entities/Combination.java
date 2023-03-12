@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class Combination {
+public class Combination implements Comparable<Combination> {
     private final List<String> phraseList;
 
     public Combination(final List<String> phraseList) {
@@ -27,6 +27,11 @@ public class Combination {
     }
 
     @Override
+    public int compareTo(Combination o) {
+        return this.phraseList.size() - o.phraseList.size();
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -45,4 +50,5 @@ public class Combination {
                 "phraseList=" + phraseList +
                 '}';
     }
+
 }

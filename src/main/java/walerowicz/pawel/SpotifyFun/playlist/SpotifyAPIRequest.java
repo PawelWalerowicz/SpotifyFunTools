@@ -12,24 +12,24 @@ import walerowicz.pawel.SpotifyFun.authorization.SpotifyAuthorizationService;
 import java.net.URI;
 
 @Service
-class HTTPRequestWrapper {
-    private final Logger logger = LoggerFactory.getLogger(HTTPRequestWrapper.class);
+class SpotifyAPIRequest {
+    private final Logger logger = LoggerFactory.getLogger(SpotifyAPIRequest.class);
     private final SpotifyAuthorizationService spotifyAuthorizationService;
 
     @Autowired
-    HTTPRequestWrapper(final SpotifyAuthorizationService spotifyAuthorizationService) {
+    SpotifyAPIRequest(final SpotifyAuthorizationService spotifyAuthorizationService) {
         this.spotifyAuthorizationService = spotifyAuthorizationService;
     }
 
-    <T> T sentGetRequest(final URI request, final Class<T> outputClass) {
-        return sentRequest(request, HttpMethod.GET, null, outputClass);
+    <T> T get(final URI request, final Class<T> outputClass) {
+        return send(request, HttpMethod.GET, null, outputClass);
     }
 
-    <T> T sentPostRequest(final URI request, final String body, final Class<T> outputClass) {
-        return sentRequest(request, HttpMethod.POST, body, outputClass);
+    <T> T post(final URI request, final String body, final Class<T> outputClass) {
+        return send(request, HttpMethod.POST, body, outputClass);
     }
 
-    <T> T sentRequest(final URI request, final HttpMethod method, final String body, final Class<T> outputClass) {
+    <T> T send(final URI request, final HttpMethod method, final String body, final Class<T> outputClass) {
         final RestTemplate restTemplate = new RestTemplate();
         final HttpEntity<String> objectHttpEntity = new HttpEntity<>(body, buildRequestHeader());
         ResponseEntity<T> responseEntity = null;
