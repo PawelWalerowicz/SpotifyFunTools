@@ -21,7 +21,7 @@ public class PlaylistController {
 
     @PostMapping("/playlist")
     public RedirectView createPlaylist(@RequestBody PlaylistRequest playlistRequest) {
-        RedirectView redirectView = new RedirectView();
+        var redirectView = new RedirectView();
         String playlistURL = null;
         try {
             playlistURL = spotifyService.buildPlaylist(playlistRequest.name(), playlistRequest.sentence());

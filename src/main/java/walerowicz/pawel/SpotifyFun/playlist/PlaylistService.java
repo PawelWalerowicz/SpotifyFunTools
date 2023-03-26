@@ -7,10 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import walerowicz.pawel.SpotifyFun.authorization.User;
 import walerowicz.pawel.SpotifyFun.playlist.entities.Combination;
 import walerowicz.pawel.SpotifyFun.playlist.entities.Playlist;
-import walerowicz.pawel.SpotifyFun.playlist.entities.Track;
 import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
 
 import java.net.URI;
@@ -49,14 +47,15 @@ class PlaylistService {
     String buildPlaylist(final String playlistName, final String inputSentence)
             throws URISyntaxException, JsonProcessingException, CombinationNotFoundException {
         logger.info("Creating playlist '{}' from sentence '{}'", playlistName, inputSentence);
-        final List<Combination> combinations = wordCombiner.buildCombinations(inputSentence);
-        final List<String> allQueries = wordCombiner.distinctQueries(combinations);
-        final List<TracksWithPhrase> allMatchingTracks = concurrentRequestProcessor.sendConcurrentRequests(allQueries);
-        final List<Combination> workingCombinations = filterWorkingCombinations(combinations, allMatchingTracks);
-        final Combination chosenCombination = chooseTightestCombination(workingCombinations);
-        final List<String> combinationPhrases = chosenCombination.getPhraseList();
+        final var combinations = wordCombiner.buildCombinations(inputSentence);
+        final var allQueries = wordCombiner.distinctQueries(combinations);
+        final var allMatchingTracks = concurrentRequestProcessor.sendConcurrentRequests(allQueries);
+        allMatchingTracks.forEach(track -> logger.info(track.phrase()));
+        final var workingCombinations = filterWorkingCombinations(combinations, allMatchingTracks);
+        final var chosenCombination = chooseTightestCombination(workingCombinations);
+        final var combinationPhrases = chosenCombination.getPhraseList();
         logger.info("Shortest found combination: {}", combinationPhrases);
-        final Playlist playlist = createNewPlaylist(playlistName);
+        final var playlist = createNewPlaylist(playlistName);
         addToPlaylist(playlist, mapCombination(combinationPhrases, allMatchingTracks));
         return playlist.externalUrls().url();
     }
@@ -82,9 +81,8 @@ class PlaylistService {
 
     private List<Combination> filterWorkingCombinations(final List<Combination> combinedWords,
                                                         final List<TracksWithPhrase> matchingTracks) {
-        final List<Combination> workingCombinations = new ArrayList<>();
-        List<TracksWithPhrase> existingTracks = removeEmptyPhrases(matchingTracks);
-        final List<String> tracksPhrases = getTracksPhrases(existingTracks);
+        final var workingCombinations = new ArrayList<Combination>();
+        final var tracksPhrases = getNonEmptyTracksPhrases(matchingTracks);
         combinedWords.stream()
                 .filter(combination -> allMatchingTracksFound(combination, tracksPhrases))
                 .forEach(combination -> {
@@ -95,13 +93,7 @@ class PlaylistService {
         return workingCombinations;
     }
 
-    private List<TracksWithPhrase> removeEmptyPhrases(final List<TracksWithPhrase> matchingTracks) {
-        return matchingTracks.stream()
-                .filter(TracksWithPhrase::hasMatchingTracks)
-                .collect(Collectors.toList());
-    }
-
-    private List<String> getTracksPhrases(List<TracksWithPhrase> matchingTracks) {
+    private List<String> getNonEmptyTracksPhrases(List<TracksWithPhrase> matchingTracks) {
         return matchingTracks.stream()
                 .filter(TracksWithPhrase::hasMatchingTracks)
                 .map(TracksWithPhrase::phrase)
@@ -113,26 +105,27 @@ class PlaylistService {
     }
 
     private Playlist createNewPlaylist(final String playlistName) throws URISyntaxException {
-        User user = userService.importUser();
-        final URI request = new URI(createPlaylistURL.replace("<USER_ID>", user.id()));
-        final String body = "{\"name\": \"" + playlistName + "\"}";
+        final var user = userService.importUser();
+        final var request = new URI(createPlaylistURL.replace("<USER_ID>", user.id()));
+        final var body = "{\"name\": \"" + playlistName + "\"}";
         return spotifyAPIRequest.post(request, body, Playlist.class);
     }
 
     private void addToPlaylist(final Playlist playlist, final List<TracksWithPhrase> tracks)
             throws URISyntaxException, JsonProcessingException {
-        final URI request = new URI(addItemToPlaylistURL.replace("<PLAYLIST_ID>", playlist.id()));
-        final Random random = new Random();
-        final List<String> finalTracks = new ArrayList<>();
-        for (TracksWithPhrase matchingTracks : tracks) {
-            final List<Track> trackOptions = matchingTracks.matchingTracks();
-            final int tracksAmount  = trackOptions.size();
-            if (tracksAmount > 0) {
-                finalTracks.add("spotify:track:" + trackOptions.get(random.nextInt(tracksAmount)).id());
-            }
-        }
-        final ObjectMapper objectMapper = new ObjectMapper();
-        final String body = objectMapper.writeValueAsString(finalTracks);
+        final var finalTracks = chooseRandomMatchingTracks(tracks);
+        final var objectMapper = new ObjectMapper();
+        final var body = objectMapper.writeValueAsString(finalTracks);
+        final var request = new URI(addItemToPlaylistURL.replace("<PLAYLIST_ID>", playlist.id()));
         spotifyAPIRequest.post(request, body, String.class);
+    }
+
+    private List<String> chooseRandomMatchingTracks(final List<TracksWithPhrase> tracks) {
+        final var random = new Random();
+        return tracks.stream()
+                .map(TracksWithPhrase::matchingTracks)
+                .filter(trackList -> trackList.size() > 0)
+                .map(trackList -> "spotify:track:" + trackList.get(random.nextInt(trackList.size())).id())
+                .collect(Collectors.toList());
     }
 }

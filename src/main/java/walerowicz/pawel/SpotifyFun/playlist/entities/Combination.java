@@ -11,6 +11,10 @@ public class Combination implements Comparable<Combination> {
         this.phraseList = phraseList;
     }
 
+    public Combination(final String... phraseList) {
+        this.phraseList = List.of(phraseList);
+    }
+
     public Combination(final Combination leadingPhrases, final String centralPhrase, final Combination tailingPhrases) {
         this.phraseList = new ArrayList<>();
         this.phraseList.addAll(leadingPhrases.getPhraseList());
@@ -20,10 +24,6 @@ public class Combination implements Comparable<Combination> {
 
     public List<String> getPhraseList() {
         return phraseList;
-    }
-
-    public int getSize() {
-        return phraseList.size();
     }
 
     @Override

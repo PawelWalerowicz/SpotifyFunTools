@@ -1,11 +1,15 @@
 package walerowicz.pawel.SpotifyFun.playlist;
 
+import dev.failsafe.Failsafe;
+import dev.failsafe.RetryPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -13,40 +17,20 @@ import java.util.stream.Collectors;
 
 @Service
 class ConcurrentRequestProcessor {
-    Logger logger = LoggerFactory.getLogger(ConcurrentRequestProcessor.class);
+    private final Logger logger = LoggerFactory.getLogger(ConcurrentRequestProcessor.class);
     private final ConcurrentSearchCallFactory concurrentSearchCallFactory;
+    private final RetryPolicy<List<TracksWithPhrase>> retryPolicy;
 
     @Autowired
     ConcurrentRequestProcessor(ConcurrentSearchCallFactory concurrentSearchCallFactory) {
         this.concurrentSearchCallFactory = concurrentSearchCallFactory;
+        this.retryPolicy = configureRetryPolicy();
     }
 
     List<TracksWithPhrase> sendConcurrentRequests(final List<String> allQueries) {
-        List<Callable<TracksWithPhrase>> allCallables = prepareConcurrentRequests(allQueries);
-        boolean shouldRetry = true;
-        List<TracksWithPhrase> result = null;
-        int retryCount=0;
-        do {        //Move it into individual request, not all of them
-            try {
-                result = sendRequests(allCallables);
-                shouldRetry = false;
-            } catch (TooManyRequestsException e1) {
-                retryCount++;
-                waitAndLog();
-            }
-        } while (shouldRetry && retryCount<10);
-        return result;
-    }
-
-    private void waitAndLog() {
-        logger.warn("Too many requests occurred. Taking a 30 second break");
-        try {
-            Thread.sleep(20_000);
-            logger.warn("(just 10 more seconds)");
-            Thread.sleep(10_000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        final var allCallables = prepareConcurrentRequests(allQueries);
+        return Failsafe.with(retryPolicy)
+                .get(() -> sendRequests(allCallables));
     }
 
     private List<Callable<TracksWithPhrase>> prepareConcurrentRequests(final List<String> allQueries) {
@@ -56,10 +40,10 @@ class ConcurrentRequestProcessor {
     }
 
     private List<TracksWithPhrase> sendRequests(final List<Callable<TracksWithPhrase>> callables) throws TooManyRequestsException {
-        ExecutorService threadPool = Executors.newFixedThreadPool(callables.size());
-        List<TracksWithPhrase> titles = new ArrayList<>();
+        var threadPool = Executors.newFixedThreadPool(callables.size());
+        var titles = new ArrayList<TracksWithPhrase>();
         try {
-            List<Future<TracksWithPhrase>> futures = threadPool.invokeAll(callables, 30, TimeUnit.SECONDS);
+            var futures = threadPool.invokeAll(callables, 30, TimeUnit.SECONDS);
             for (Future<TracksWithPhrase> future : futures) {
                 titles.add(future.get());
             }
@@ -69,5 +53,19 @@ class ConcurrentRequestProcessor {
             e2.printStackTrace();
         }
         return titles;
+    }
+
+    private RetryPolicy<List<TracksWithPhrase>> configureRetryPolicy() {
+        return RetryPolicy.<List<TracksWithPhrase>>builder()
+                .handle(TooManyRequestsException.class)
+                .withDelay(10, 30, ChronoUnit.SECONDS)
+                .withMaxRetries(10)
+                .withMaxDuration(Duration.ofMinutes(5))
+                .onFailedAttempt(listener ->
+                        logger.warn("Too many requests send, waiting for a bit, attempt took: {} s",
+                                    listener.getElapsedAttemptTime().toSeconds()
+                        )
+                )
+                .build();
     }
 }

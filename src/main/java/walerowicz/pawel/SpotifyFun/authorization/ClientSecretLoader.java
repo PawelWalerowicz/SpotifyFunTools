@@ -17,10 +17,10 @@ class ClientSecretLoader {
 
     String loadClientSecret() {
         try {
-            final InputStream resourceAsStream = SpotifyAuthorizationService.class
+            final var resourceAsStream = SpotifyAuthorizationService.class
                                                 .getClassLoader()
                                                 .getResourceAsStream(clientSecretFileName);
-            final Scanner scanner = new Scanner(Objects.requireNonNull(resourceAsStream));
+            final var scanner = new Scanner(Objects.requireNonNull(resourceAsStream));
             return scanner.nextLine();
         } catch (NullPointerException e) {
             throw new AuthorizationException("Exception occurred during retrieval of client secret " +

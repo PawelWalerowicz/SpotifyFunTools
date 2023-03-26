@@ -12,18 +12,24 @@ class ConcurrentSearchCallFactory {
     private final String searchForTrackURL;
     private final SpotifyAuthorizationService spotifyAuthorizationService;
     private HttpHeaders header;
+    private final String cleanupRegex;
 
     @Autowired
-    ConcurrentSearchCallFactory(@Value("${spotify.search.track}") String searchForTrackURL,
-                                final SpotifyAuthorizationService spotifyAuthorizationService) {
+    ConcurrentSearchCallFactory(@Value("${spotify.search.track}") final String searchForTrackURL,
+                                final SpotifyAuthorizationService spotifyAuthorizationService,
+                                @Value("${spotify.combinator.cleanup.regex}") final String cleanupRegex) {
         this.searchForTrackURL = searchForTrackURL;
         this.spotifyAuthorizationService = spotifyAuthorizationService;
+        this.cleanupRegex = cleanupRegex;
     }
 
     ConcurrentSearchCall createConcurrentSearchCall(final String query) {
-        return new ConcurrentSearchCall(query,
+        return new ConcurrentSearchCall(
+                query,
                 searchForTrackURL,
-                getHeader());
+                getHeader(),
+                cleanupRegex
+        );
     }
 
     private HttpHeaders getHeader() {
@@ -34,7 +40,7 @@ class ConcurrentSearchCallFactory {
     }
 
     private HttpHeaders buildHeader() {
-        HttpHeaders header = new HttpHeaders();
+        var header = new HttpHeaders();
         header.setContentType(MediaType.APPLICATION_JSON);
         header.set("Authorization", "Bearer " + spotifyAuthorizationService.getAccessToken().getToken());
         return header;
