@@ -19,8 +19,8 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
-class PlaylistService {
-    private static final Logger logger = LoggerFactory.getLogger(PlaylistService.class);
+class PlaylistGenerator {
+    private static final Logger logger = LoggerFactory.getLogger(PlaylistGenerator.class);
     private final SpotifyAPIRequest spotifyAPIRequest;
     private final ConcurrentRequestProcessor concurrentRequestProcessor;
     private final UserService userService;
@@ -30,12 +30,12 @@ class PlaylistService {
     private final String addItemToPlaylistURL;
 
     @Autowired
-    public PlaylistService(final SpotifyAPIRequest spotifyAPIRequest,
-                           final ConcurrentRequestProcessor concurrentRequestProcessor,
-                           final UserService userService,
-                           final WordCombiner wordCombiner,
-                           @Value("${spotify.playlist.create}") final String createPlaylistURL,
-                           @Value("${spotify.playlist.item.add}") final String addItemToPlaylistURL) {
+    public PlaylistGenerator(final SpotifyAPIRequest spotifyAPIRequest,
+                             final ConcurrentRequestProcessor concurrentRequestProcessor,
+                             final UserService userService,
+                             final WordCombiner wordCombiner,
+                             @Value("${spotify.playlist.create}") final String createPlaylistURL,
+                             @Value("${spotify.playlist.item.add}") final String addItemToPlaylistURL) {
         this.spotifyAPIRequest = spotifyAPIRequest;
         this.concurrentRequestProcessor = concurrentRequestProcessor;
         this.userService = userService;

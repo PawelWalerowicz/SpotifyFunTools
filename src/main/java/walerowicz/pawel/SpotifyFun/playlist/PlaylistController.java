@@ -12,10 +12,10 @@ import java.net.URISyntaxException;
 
 @Controller
 public class PlaylistController {
-    private final PlaylistService spotifyService;
+    private final PlaylistGenerator spotifyService;
 
     @Autowired
-    public PlaylistController(PlaylistService spotifyService) {
+    public PlaylistController(PlaylistGenerator spotifyService) {
         this.spotifyService = spotifyService;
     }
 
