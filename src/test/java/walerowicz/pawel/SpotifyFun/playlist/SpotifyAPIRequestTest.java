@@ -19,12 +19,14 @@ class SpotifyAPIRequestTest {
     private SpotifyAPIRequest apiRequest;
     @Mock
     private SpotifyAuthorizationService mockService;
+    @Mock
+    private RetryPolicyConfiguration mockRetryPolicyConfig;
     private SpotifyAccessToken testToken;
     private String testTokenString = "testToken";
 
     @BeforeEach
     void reset() {
-        apiRequest = new SpotifyAPIRequest(mockService);
+        apiRequest = new SpotifyAPIRequest(mockService, mockRetryPolicyConfig);
         this.testToken = new SpotifyAccessToken();
         testToken.setToken(testTokenString);
         when(mockService.getAccessToken()).thenReturn(this.testToken).thenReturn(testToken);

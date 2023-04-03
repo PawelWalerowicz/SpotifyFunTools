@@ -7,13 +7,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import walerowicz.pawel.SpotifyFun.playlist.entities.Combination;
 import walerowicz.pawel.SpotifyFun.playlist.entities.Playlist;
 import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -22,86 +22,35 @@ import java.util.stream.Collectors;
 class PlaylistGenerator {
     private static final Logger logger = LoggerFactory.getLogger(PlaylistGenerator.class);
     private final SpotifyAPIRequest spotifyAPIRequest;
-    private final ConcurrentRequestProcessor concurrentRequestProcessor;
     private final UserService userService;
-    private final WordCombiner wordCombiner;
-
+    private final CombinationMatcher combinationMatcher;
     private final String createPlaylistURL;
     private final String addItemToPlaylistURL;
 
     @Autowired
     public PlaylistGenerator(final SpotifyAPIRequest spotifyAPIRequest,
-                             final ConcurrentRequestProcessor concurrentRequestProcessor,
                              final UserService userService,
-                             final WordCombiner wordCombiner,
+                             final CombinationMatcher combinationMatcher,
                              @Value("${spotify.playlist.create}") final String createPlaylistURL,
                              @Value("${spotify.playlist.item.add}") final String addItemToPlaylistURL) {
         this.spotifyAPIRequest = spotifyAPIRequest;
-        this.concurrentRequestProcessor = concurrentRequestProcessor;
         this.userService = userService;
-        this.wordCombiner = wordCombiner;
+        this.combinationMatcher = combinationMatcher;
         this.createPlaylistURL = createPlaylistURL;
         this.addItemToPlaylistURL = addItemToPlaylistURL;
     }
 
     String buildPlaylist(final String playlistName, final String inputSentence)
             throws URISyntaxException, JsonProcessingException, CombinationNotFoundException {
+        final var start = Instant.now();
         logger.info("Creating playlist '{}' from sentence '{}'", playlistName, inputSentence);
-        final var combinations = wordCombiner.buildCombinations(inputSentence);
-        final var allQueries = wordCombiner.distinctQueries(combinations);
-        final var allMatchingTracks = concurrentRequestProcessor.sendConcurrentRequests(allQueries);
-        allMatchingTracks.forEach(track -> logger.info(track.phrase()));
-        final var workingCombinations = filterWorkingCombinations(combinations, allMatchingTracks);
-        final var chosenCombination = chooseTightestCombination(workingCombinations);
-        final var combinationPhrases = chosenCombination.getPhraseList();
-        logger.info("Shortest found combination: {}", combinationPhrases);
+        final var combinationTracks = combinationMatcher.findCombinationWithMatchingTracks(inputSentence);
         final var playlist = createNewPlaylist(playlistName);
-        addToPlaylist(playlist, mapCombination(combinationPhrases, allMatchingTracks));
+        final var end = Instant.now();
+        double timeDifference = ((double) Duration.between(start, end).toMillis()) / 1000;
+        logger.info("Found combination in {} seconds", timeDifference);
+        addToPlaylist(playlist, combinationTracks);
         return playlist.externalUrls().url();
-    }
-
-    private List<TracksWithPhrase> mapCombination(List<String> combinationPhrases, List<TracksWithPhrase> allMatchingTracks) {
-        return combinationPhrases.stream()
-                .map(phrase -> getTrackForPhrase(phrase, allMatchingTracks))
-                .collect(Collectors.toList());
-    }
-
-    private TracksWithPhrase getTrackForPhrase(final String phrase, final List<TracksWithPhrase> tracksWithPhrase) {
-        return tracksWithPhrase.stream()
-                .filter(tracks -> tracks.phrase().equalsIgnoreCase(phrase))
-                .findFirst()
-                .orElseThrow(() -> new CombinationNotFoundException("Couldn't find combination for given input sentence"));
-    }
-
-    private Combination chooseTightestCombination(List<Combination> workingCombinations) throws CombinationNotFoundException {
-        return workingCombinations.stream()
-                .min(Combination::compareTo)
-                .orElseThrow(() -> new CombinationNotFoundException("Couldn't find combination for given input sentence"));
-    }
-
-    private List<Combination> filterWorkingCombinations(final List<Combination> combinedWords,
-                                                        final List<TracksWithPhrase> matchingTracks) {
-        final var workingCombinations = new ArrayList<Combination>();
-        final var tracksPhrases = getNonEmptyTracksPhrases(matchingTracks);
-        combinedWords.stream()
-                .filter(combination -> allMatchingTracksFound(combination, tracksPhrases))
-                .forEach(combination -> {
-                    logger.info("Found working combination: {}", combination);
-                    workingCombinations.add(combination);
-                });
-        logger.info("Found {} working combinations.", workingCombinations.size());
-        return workingCombinations;
-    }
-
-    private List<String> getNonEmptyTracksPhrases(List<TracksWithPhrase> matchingTracks) {
-        return matchingTracks.stream()
-                .filter(TracksWithPhrase::hasMatchingTracks)
-                .map(TracksWithPhrase::phrase)
-                .collect(Collectors.toList());
-    }
-
-    private boolean allMatchingTracksFound(final Combination combination, final List<String> tracksPhrases) {
-        return tracksPhrases.containsAll(combination.getPhraseList());
     }
 
     private Playlist createNewPlaylist(final String playlistName) throws URISyntaxException {
@@ -128,4 +77,6 @@ class PlaylistGenerator {
                 .map(trackList -> "spotify:track:" + trackList.get(random.nextInt(trackList.size())).id())
                 .collect(Collectors.toList());
     }
+
+
 }

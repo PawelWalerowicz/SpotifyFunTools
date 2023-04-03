@@ -1,71 +1,47 @@
 package walerowicz.pawel.SpotifyFun.playlist;
 
-import dev.failsafe.Failsafe;
-import dev.failsafe.RetryPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @Service
 class ConcurrentRequestProcessor {
     private final Logger logger = LoggerFactory.getLogger(ConcurrentRequestProcessor.class);
-    private final ConcurrentSearchCallFactory concurrentSearchCallFactory;
-    private final RetryPolicy<List<TracksWithPhrase>> retryPolicy;
+    private final ConcurrentSearchFactory concurrentSearchFactory;
+    private ExecutorService threadPool;
 
     @Autowired
-    ConcurrentRequestProcessor(ConcurrentSearchCallFactory concurrentSearchCallFactory) {
-        this.concurrentSearchCallFactory = concurrentSearchCallFactory;
-        this.retryPolicy = configureRetryPolicy();
+    ConcurrentRequestProcessor(ConcurrentSearchFactory concurrentSearchCallFactory) {
+        this.concurrentSearchFactory = concurrentSearchCallFactory;
     }
 
-    List<TracksWithPhrase> sendConcurrentRequests(final List<String> allQueries) {
-        final var allCallables = prepareConcurrentRequests(allQueries);
-        return Failsafe.with(retryPolicy)
-                .get(() -> sendRequests(allCallables));
+    void sendConcurrentRequests(final List<String> allQueries, final Set<TracksWithPhrase> outputSet) {
+        final var allSearches = prepareConcurrentRequests(allQueries, outputSet);
+        sendRequests(allSearches);
     }
 
-    private List<Callable<TracksWithPhrase>> prepareConcurrentRequests(final List<String> allQueries) {
+    void stopSendingRequests() {
+        threadPool.shutdownNow();
+        logger.info("Request processor has stopped.");
+    }
+
+    private Set<ConcurrentSearch> prepareConcurrentRequests(final List<String> allQueries, final Set<TracksWithPhrase> outputSet) {
         return allQueries.stream()
-                .map(concurrentSearchCallFactory::createConcurrentSearchCall)
-                .collect(Collectors.toList());
+                .map(query -> concurrentSearchFactory.createConcurrentSearchInstance(query, outputSet))
+                .collect(Collectors.toSet());
     }
 
-    private List<TracksWithPhrase> sendRequests(final List<Callable<TracksWithPhrase>> callables) throws TooManyRequestsException {
-        var threadPool = Executors.newFixedThreadPool(callables.size());
-        var titles = new ArrayList<TracksWithPhrase>();
-        try {
-            var futures = threadPool.invokeAll(callables, 30, TimeUnit.SECONDS);
-            for (Future<TracksWithPhrase> future : futures) {
-                titles.add(future.get());
-            }
-        } catch (ExecutionException e) {
-            throw new TooManyRequestsException();
-        } catch (InterruptedException e2) {
-            e2.printStackTrace();
-        }
-        return titles;
+    private void sendRequests(final Set<ConcurrentSearch> concurrentSearches) {
+        threadPool = Executors.newFixedThreadPool(concurrentSearches.size());
+        concurrentSearches.forEach(threadPool::execute);
     }
 
-    private RetryPolicy<List<TracksWithPhrase>> configureRetryPolicy() {
-        return RetryPolicy.<List<TracksWithPhrase>>builder()
-                .handle(TooManyRequestsException.class)
-                .withDelay(10, 30, ChronoUnit.SECONDS)
-                .withMaxRetries(10)
-                .withMaxDuration(Duration.ofMinutes(5))
-                .onFailedAttempt(listener ->
-                        logger.warn("Too many requests send, waiting for a bit, attempt took: {} s",
-                                    listener.getElapsedAttemptTime().toSeconds()
-                        )
-                )
-                .build();
-    }
 }
