@@ -7,7 +7,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import walerowicz.pawel.SpotifyFun.playlist.entities.ExternalUrls;
 import walerowicz.pawel.SpotifyFun.playlist.entities.Playlist;
+import walerowicz.pawel.SpotifyFun.playlist.entities.PlaylistUrl;
 import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
 
 import java.net.URI;
@@ -40,7 +42,7 @@ class PlaylistGenerator {
         this.addItemToPlaylistURL = addItemToPlaylistURL;
     }
 
-    String buildPlaylist(final String playlistName, final String inputSentence)
+    PlaylistUrl buildPlaylist(final String playlistName, final String inputSentence)
             throws URISyntaxException, JsonProcessingException, CombinationNotFoundException {
         final var start = Instant.now();
         logger.info("Creating playlist '{}' from sentence '{}'", playlistName, inputSentence);
@@ -50,7 +52,7 @@ class PlaylistGenerator {
         double timeDifference = ((double) Duration.between(start, end).toMillis()) / 1000;
         logger.info("Found combination in {} seconds", timeDifference);
         addToPlaylist(playlist, combinationTracks);
-        return playlist.externalUrls().url();
+        return new PlaylistUrl(playlist.externalUrls().url());
     }
 
     private Playlist createNewPlaylist(final String playlistName) throws URISyntaxException {

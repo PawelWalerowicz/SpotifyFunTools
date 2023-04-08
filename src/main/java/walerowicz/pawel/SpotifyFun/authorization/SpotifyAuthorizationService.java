@@ -55,7 +55,7 @@ public class SpotifyAuthorizationService {
         return authorizeURL + "?" + arguments;
     }
 
-    void retrieveAccessToken(String authorizationCode) {
+    public void retrieveAccessToken(String authorizationCode) {
         final var restTemplate = new RestTemplate();
         final var responseEntity = restTemplate.exchange(tokenURL,
                                                                                         HttpMethod.POST,

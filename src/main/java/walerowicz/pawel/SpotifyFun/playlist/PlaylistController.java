@@ -2,15 +2,15 @@ package walerowicz.pawel.SpotifyFun.playlist;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.servlet.view.RedirectView;
+import org.springframework.web.bind.annotation.RestController;
 import walerowicz.pawel.SpotifyFun.playlist.entities.PlaylistRequest;
+import walerowicz.pawel.SpotifyFun.playlist.entities.PlaylistUrl;
 
 import java.net.URISyntaxException;
 
-@Controller
+@RestController
 public class PlaylistController {
     private final PlaylistGenerator spotifyService;
 
@@ -19,16 +19,14 @@ public class PlaylistController {
         this.spotifyService = spotifyService;
     }
 
-    @PostMapping("/playlist")
-    public RedirectView createPlaylist(@RequestBody PlaylistRequest playlistRequest) {
-        var redirectView = new RedirectView();
-        String playlistURL = null;
+    @PostMapping("/playlist/new")
+    public PlaylistUrl createPlaylist(@RequestBody PlaylistRequest playlistRequest) {
+        PlaylistUrl playlistURL = null;
         try {
             playlistURL = spotifyService.buildPlaylist(playlistRequest.name(), playlistRequest.sentence());
         } catch (URISyntaxException | JsonProcessingException | CombinationNotFoundException e) {
             e.printStackTrace();
         }
-        redirectView.setUrl(playlistURL);
-        return redirectView;
+        return playlistURL;
     }
 }
