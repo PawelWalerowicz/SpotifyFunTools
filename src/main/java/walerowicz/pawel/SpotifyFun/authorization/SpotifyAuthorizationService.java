@@ -2,11 +2,15 @@ package walerowicz.pawel.SpotifyFun.authorization;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import walerowicz.pawel.SpotifyFun.ClientSecretLoader;
 import walerowicz.pawel.SpotifyFun.authorization.entites.SpotifyAccessToken;
 
 import java.io.UnsupportedEncodingException;
@@ -26,6 +30,7 @@ public class SpotifyAuthorizationService {
     private final String tokenURL;
     private final String authorizeURL;
     private Optional<SpotifyAccessToken> accessToken;
+    private final String spotifySecretFilename;
 
     @Autowired
     SpotifyAuthorizationService(final ClientSecretLoader clientSecretLoader,
@@ -33,13 +38,15 @@ public class SpotifyAuthorizationService {
                                        @Value("${spotify.grantType}") final String grantType,
                                        @Value("${spotify.redirectURI}") final String redirectURI,
                                        @Value("${spotify.tokenURL}") final String tokenURL,
-                                       @Value("${spotify.authorizeURL}") final String authorizeURL) {
+                                       @Value("${spotify.authorizeURL}") final String authorizeURL,
+                                @Value("${spotify.secret.filename}") final String spotifySecretFilename) {
         this.clientSecretLoader = clientSecretLoader;
         this.clientId = clientId;
         this.grantType = grantType;
         this.redirectURI = redirectURI;
         this.tokenURL = tokenURL;
         this.authorizeURL = authorizeURL;
+        this.spotifySecretFilename = spotifySecretFilename;
     }
 
     public SpotifyAccessToken getAccessToken()  {
@@ -84,7 +91,7 @@ public class SpotifyAuthorizationService {
     }
 
     private String buildEncodedAuthorizationValue() {
-        final String plainClientCredentials = clientId + ":" + clientSecretLoader.loadClientSecret();
+        final String plainClientCredentials = clientId + ":" + clientSecretLoader.loadClientSecret(spotifySecretFilename);
         final String encodedClientCredentials = Base64.getEncoder().encodeToString(plainClientCredentials.getBytes());
         return "Basic " + encodedClientCredentials;
     }

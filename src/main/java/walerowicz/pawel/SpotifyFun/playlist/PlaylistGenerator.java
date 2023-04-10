@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import walerowicz.pawel.SpotifyFun.playlist.entities.ExternalUrls;
 import walerowicz.pawel.SpotifyFun.playlist.entities.Playlist;
 import walerowicz.pawel.SpotifyFun.playlist.entities.PlaylistUrl;
 import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
