@@ -14,7 +14,7 @@ public class ClientSecretLoader {
         try {
             final var resourceAsStream = SpotifyAuthorizationService.class
                                                 .getClassLoader()
-                                                .getResourceAsStream(fileName + ".txt");
+                                                .getResourceAsStream(fileName);
             final var scanner = new Scanner(Objects.requireNonNull(resourceAsStream));
             return scanner.nextLine();
         } catch (NullPointerException e) {

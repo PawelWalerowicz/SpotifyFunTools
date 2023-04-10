@@ -49,7 +49,8 @@ public class SpellCheck {
     public String correctSpelling(final String inputSentence) {
         try {
             final var checkResponse = sendCheckSpellingRequest(inputSentence);
-            if (checkResponse != null && !checkResponse.elements().isEmpty()) {
+            System.out.println(checkResponse);
+            if (checkResponse != null && checkResponse.elements() !=null) {
                 return replaceMistakes(inputSentence, checkResponse);
             }
         } catch (JsonProcessingException | URISyntaxException e) {
