@@ -18,8 +18,9 @@ class WordCombiner {
         this.cleanUpRegex = cleanUpRegex;
     }
 
+    //when joinLimit >= <single words in input sentence> expected amount of combinations equals to 2^(<amount of words> -1)
     List<Combination> buildCombinations(final String inputSentence) {
-        List<String> singleWords = splitSentence(inputSentence);
+        final List<String> singleWords = splitSentence(inputSentence);
         return combine(singleWords);
     }
 

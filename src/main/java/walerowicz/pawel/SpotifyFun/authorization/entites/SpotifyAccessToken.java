@@ -1,4 +1,4 @@
-package walerowicz.pawel.SpotifyFun.authorization;
+package walerowicz.pawel.SpotifyFun.authorization.entites;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
