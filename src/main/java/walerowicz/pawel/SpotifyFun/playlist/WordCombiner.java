@@ -20,7 +20,7 @@ class WordCombiner {
 
     //when joinLimit >= <single words in input sentence> expected amount of combinations equals to 2^(<amount of words> -1)
     List<Combination> buildCombinations(final String inputSentence) {
-        final List<String> singleWords = splitSentence(inputSentence);
+        final var singleWords = splitSentence(inputSentence);
         return combine(singleWords);
     }
 
@@ -40,7 +40,7 @@ class WordCombiner {
     }
 
     private List<Combination> combine(final List<String> allWords) {
-        List<Combination> allCombinations = new ArrayList<>();
+        List<Combination> allCombinations = new ArrayList<Combination>();
         allCombinations.add(new Combination(allWords));
         for (int joinedWords = 2; joinedWords <= Math.min(joinLimit, allWords.size()); joinedWords++) {
             allCombinations.addAll(combineForJoinedWords(joinedWords, allWords));
@@ -52,8 +52,8 @@ class WordCombiner {
 
     private List<Combination> combineForJoinedWords(final int joinedWords, final List<String> allWords) {
         final List<Combination> allSubLists = new ArrayList<>();
-        final int allWordsAmount = allWords.size();
-        for (int startIndex = 0; startIndex < allWordsAmount + 1 - joinedWords; startIndex++) {
+        final var allWordsAmount = allWords.size();
+        for (var startIndex = 0; startIndex < allWordsAmount + 1 - joinedWords; startIndex++) {
             int endIndex = startIndex + joinedWords;
             final List<Combination> leadingCombinations = combine(allWords.subList(0, startIndex));
             final String joined = String.join(" ", allWords.subList(startIndex, endIndex));
@@ -67,7 +67,7 @@ class WordCombiner {
                                                            final String joined,
                                                            final List<Combination> tailingCombinations) {
         final List<Combination> solvedCombinations = new ArrayList<>();
-        for (Combination leadingCombination : leadingCombinations) {
+        for (var leadingCombination : leadingCombinations) {
             for (Combination tailingCombination : tailingCombinations) {
                 solvedCombinations.add(new Combination(leadingCombination, joined, tailingCombination));
             }

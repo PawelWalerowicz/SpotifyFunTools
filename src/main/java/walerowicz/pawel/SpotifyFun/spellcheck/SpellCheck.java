@@ -2,8 +2,7 @@ package walerowicz.pawel.SpotifyFun.spellcheck;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -21,8 +20,8 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class SpellCheck {
-    private final Logger logger = LoggerFactory.getLogger(SpellCheck.class);
     private final ClientSecretLoader secretLoader;
     private final BodyFactory bodyFactory;
     private final ObjectMapper objectMapper;
@@ -54,7 +53,7 @@ public class SpellCheck {
                 return replaceMistakes(inputSentence, checkResponse);
             }
         } catch (JsonProcessingException | URISyntaxException e) {
-            logger.warn("Spell checker failed. Returning original sentence", e);
+            log.warn("Spell checker failed. Returning original sentence", e);
         }
         return inputSentence;
     }

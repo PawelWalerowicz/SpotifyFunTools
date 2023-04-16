@@ -1,7 +1,6 @@
 package walerowicz.pawel.SpotifyFun;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,8 +9,8 @@ import walerowicz.pawel.SpotifyFun.authorization.SpotifyAuthorizationService;
 
 //TODO: add exception handling
 @Controller
+@Slf4j
 public class PageController {
-    private final Logger logger = LoggerFactory.getLogger(PageController.class);
     private final SpotifyAuthorizationService spotifyAuthorizationService;
 
     @Autowired
@@ -22,7 +21,7 @@ public class PageController {
     @GetMapping("/playlist")
     public String playlist(@RequestParam String code) {
         spotifyAuthorizationService.retrieveAccessToken(code);
-        logger.info("A user logged in.");
+        log.info("A user logged in.");
         return "PlaylistGeneratorPage";
     }
 }

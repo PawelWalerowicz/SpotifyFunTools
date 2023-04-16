@@ -2,8 +2,7 @@ package walerowicz.pawel.SpotifyFun.playlist;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -20,8 +19,8 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 class PlaylistGenerator {
-    private static final Logger logger = LoggerFactory.getLogger(PlaylistGenerator.class);
     private final SpotifyAPIRequest spotifyAPIRequest;
     private final UserService userService;
     private final CombinationMatcher combinationMatcher;
@@ -44,12 +43,12 @@ class PlaylistGenerator {
     PlaylistUrl buildPlaylist(final String playlistName, final String inputSentence)
             throws URISyntaxException, JsonProcessingException, CombinationNotFoundException {
         final var start = Instant.now();
-        logger.info("Creating playlist '{}' from sentence '{}'", playlistName, inputSentence);
+        log.info("Creating playlist '{}' from sentence '{}'", playlistName, inputSentence);
         final var combinationTracks = combinationMatcher.findCombinationWithMatchingTracks(inputSentence);
         final var playlist = createNewPlaylist(playlistName);
         final var end = Instant.now();
         double timeDifference = ((double) Duration.between(start, end).toMillis()) / 1000;
-        logger.info("Found combination in {} seconds", timeDifference);
+        log.info("Found combination in {} seconds", timeDifference);
         addToPlaylist(playlist, combinationTracks);
         return new PlaylistUrl(playlist.externalUrls().url());
     }

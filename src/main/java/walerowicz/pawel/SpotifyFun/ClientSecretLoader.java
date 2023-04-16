@@ -12,7 +12,7 @@ public class ClientSecretLoader {
 
     public String loadClientSecret(final String fileName) {
         try {
-            final var resourceAsStream = SpotifyAuthorizationService.class
+            final var resourceAsStream = ClientSecretLoader.class
                                                 .getClassLoader()
                                                 .getResourceAsStream(fileName);
             final var scanner = new Scanner(Objects.requireNonNull(resourceAsStream));

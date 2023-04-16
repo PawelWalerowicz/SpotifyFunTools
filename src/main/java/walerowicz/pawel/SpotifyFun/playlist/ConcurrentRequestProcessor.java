@@ -1,7 +1,6 @@
 package walerowicz.pawel.SpotifyFun.playlist;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
@@ -13,8 +12,8 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 class ConcurrentRequestProcessor {
-    private final Logger logger = LoggerFactory.getLogger(ConcurrentRequestProcessor.class);
     private final ConcurrentSearchFactory concurrentSearchFactory;
     private ExecutorService threadPool;
 
@@ -30,7 +29,7 @@ class ConcurrentRequestProcessor {
 
     void stopSendingRequests() {
         threadPool.shutdownNow();
-        logger.info("Request processor has stopped.");
+        log.info("Request processor has stopped.");
     }
 
     private Set<ConcurrentSearch> prepareConcurrentRequests(final List<String> allQueries, final Set<TracksWithPhrase> outputSet) {

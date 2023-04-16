@@ -1,7 +1,6 @@
 package walerowicz.pawel.SpotifyFun.playlist;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import walerowicz.pawel.SpotifyFun.playlist.entities.FoundTracksResultPackage;
 import walerowicz.pawel.SpotifyFun.playlist.entities.SearchResult;
 import walerowicz.pawel.SpotifyFun.playlist.entities.Track;
@@ -16,8 +15,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 class ConcurrentSearch implements Runnable {
-    private final Logger logger = LoggerFactory.getLogger(ConcurrentSearch.class);
     private final String query;
     private final String searchForTrackURL;
     private final String cleanupRegex;
@@ -49,14 +48,14 @@ class ConcurrentSearch implements Runnable {
         var attemptCounter = 1;
         var initialRequest = true;
         do {
-            logger.debug("Searching for '{}' ({} attempt)", query, attemptCounter);
+            log.debug("Searching for '{}' ({} attempt)", query, attemptCounter);
             final var requestUri = getRequestUri(initialRequest, foundTracksResult);
             foundTracksResult = getResponse(requestUri);
             matches = filterTracks(foundTracksResult);
             attemptCounter++;
             initialRequest = false;
         } while (matches.isEmpty() && foundTracksResult.hasNextURL() && attemptCounter < 50 && !currentThread.isInterrupted());
-        logger.debug("Searching finished for phrase '{}' after {} attempts. Result: {}", query, attemptCounter, matches);
+        log.debug("Searching finished for phrase '{}' after {} attempts. Result: {}", query, attemptCounter, matches);
         return matches;
     }
 

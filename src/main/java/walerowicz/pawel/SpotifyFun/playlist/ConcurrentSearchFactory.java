@@ -2,7 +2,6 @@ package walerowicz.pawel.SpotifyFun.playlist;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import walerowicz.pawel.SpotifyFun.authorization.SpotifyAuthorizationService;
 import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
