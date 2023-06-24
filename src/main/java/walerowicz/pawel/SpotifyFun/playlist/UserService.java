@@ -1,24 +1,36 @@
 package walerowicz.pawel.SpotifyFun.playlist;
 
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+import walerowicz.pawel.SpotifyFun.authorization.AuthorizationException;
 import walerowicz.pawel.SpotifyFun.authorization.entites.User;
-
-import java.net.URI;
-import java.net.URISyntaxException;
+import walerowicz.pawel.SpotifyFun.playlist.concurrent.TooManyRequestsException;
 
 @Service
+@RequiredArgsConstructor
 class UserService {
-    final SpotifyAPIRequest spotifyAPIRequest;
-    private final URI getUserRequestURI;
+    private static final String GET_USER_ENDPOINT = "me";
 
-    UserService(@Value("${spotify.user.profileURL}") final String userProfileURL,
-                       final SpotifyAPIRequest spotifyAPIRequest) throws URISyntaxException {
-        this.getUserRequestURI = new URI(userProfileURL);
-        this.spotifyAPIRequest = spotifyAPIRequest;
-    }
+    private final WebClient webClient;
 
-    User importUser() {
-        return spotifyAPIRequest.get(getUserRequestURI, User.class);
+    User importUser(String token) {
+        return webClient
+                .get()
+                .uri(GET_USER_ENDPOINT)
+                .headers(httpHeaders -> httpHeaders.setBearerAuth(token))
+                .exchangeToMono(response -> {
+                    final var httpStatusCode = response.statusCode();
+                    if (httpStatusCode.equals(HttpStatus.TOO_MANY_REQUESTS)) {
+                        return Mono.error(new TooManyRequestsException());
+                    } else if (httpStatusCode.equals(HttpStatus.UNAUTHORIZED)) {
+                        return Mono.error(new AuthorizationException("Web token expired"));
+                    } else {
+                        return response.bodyToMono(User.class);
+                    }
+                })
+                .block();
     }
 }

@@ -1,5 +1,7 @@
-package walerowicz.pawel.SpotifyFun.playlist;
+package walerowicz.pawel.SpotifyFun.playlist.combinations;
 
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import walerowicz.pawel.SpotifyFun.playlist.entities.Combination;
@@ -8,19 +10,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+public
 class WordCombiner {
+    @Value("${spotify.combinator.words.limit}")
     private final int joinLimit;
+    @Value("${spotify.combinator.cleanup.regex}")
     private final String cleanUpRegex;
-
-    public WordCombiner(@Value("${spotify.combinator.words.limit}") final int joinLimit,
-                        @Value("${spotify.combinator.cleanup.regex}") final String cleanUpRegex) {
-        this.joinLimit = joinLimit;
-        this.cleanUpRegex = cleanUpRegex;
-    }
 
     //when joinLimit >= <single words in input sentence> expected amount of combinations equals to 2^(<amount of words> -1)
     List<Combination> buildCombinations(final String inputSentence) {
-        final List<String> singleWords = splitSentence(inputSentence);
+        final var strippedAccents = StringUtils.stripAccents(inputSentence);
+        final var singleWords = splitSentence(strippedAccents);
         return combine(singleWords);
     }
 
@@ -52,8 +53,8 @@ class WordCombiner {
 
     private List<Combination> combineForJoinedWords(final int joinedWords, final List<String> allWords) {
         final List<Combination> allSubLists = new ArrayList<>();
-        final int allWordsAmount = allWords.size();
-        for (int startIndex = 0; startIndex < allWordsAmount + 1 - joinedWords; startIndex++) {
+        final var allWordsAmount = allWords.size();
+        for (var startIndex = 0; startIndex < allWordsAmount + 1 - joinedWords; startIndex++) {
             int endIndex = startIndex + joinedWords;
             final List<Combination> leadingCombinations = combine(allWords.subList(0, startIndex));
             final String joined = String.join(" ", allWords.subList(startIndex, endIndex));
@@ -67,7 +68,7 @@ class WordCombiner {
                                                            final String joined,
                                                            final List<Combination> tailingCombinations) {
         final List<Combination> solvedCombinations = new ArrayList<>();
-        for (Combination leadingCombination : leadingCombinations) {
+        for (var leadingCombination : leadingCombinations) {
             for (Combination tailingCombination : tailingCombinations) {
                 solvedCombinations.add(new Combination(leadingCombination, joined, tailingCombination));
             }
