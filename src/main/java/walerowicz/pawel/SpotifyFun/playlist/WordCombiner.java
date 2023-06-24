@@ -1,5 +1,6 @@
 package walerowicz.pawel.SpotifyFun.playlist;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import walerowicz.pawel.SpotifyFun.playlist.entities.Combination;
@@ -8,15 +9,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 class WordCombiner {
+    @Value("${spotify.combinator.words.limit}")
     private final int joinLimit;
+    @Value("${spotify.combinator.cleanup.regex}")
     private final String cleanUpRegex;
-
-    public WordCombiner(@Value("${spotify.combinator.words.limit}") final int joinLimit,
-                        @Value("${spotify.combinator.cleanup.regex}") final String cleanUpRegex) {
-        this.joinLimit = joinLimit;
-        this.cleanUpRegex = cleanUpRegex;
-    }
 
     //when joinLimit >= <single words in input sentence> expected amount of combinations equals to 2^(<amount of words> -1)
     List<Combination> buildCombinations(final String inputSentence) {

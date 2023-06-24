@@ -1,7 +1,9 @@
 package walerowicz.pawel.SpotifyFun.playlist;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
@@ -13,17 +15,13 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @Service
-@Slf4j
 @Scope("prototype")
+@RequiredArgsConstructor
+@Slf4j
 class ConcurrentRequestProcessor {
-    private final ConcurrentSearchFactory concurrentSearchFactory;
-    private ExecutorService threadPool;
+    @Value("${spotify.combinator.cleanup.regex}")
+    private final String cleanupRegex;
     private Set<ConcurrentSearch> concurrentSearches;
-
-    @Autowired
-    ConcurrentRequestProcessor(ConcurrentSearchFactory concurrentSearchCallFactory) {
-        this.concurrentSearchFactory = concurrentSearchCallFactory;
-    }
 
     void sendConcurrentRequests(final List<String> allQueries,
                                 final String token,
@@ -41,12 +39,12 @@ class ConcurrentRequestProcessor {
                                            final String token,
                                            final Set<TracksWithPhrase> outputSet) {
         concurrentSearches = allQueries.stream()
-                .map(query -> concurrentSearchFactory.createConcurrentSearchInstance(query, token, outputSet))
+                .map(query -> new ConcurrentSearch(query, token, cleanupRegex, outputSet))
                 .collect(Collectors.toSet());
     }
 
     private void sendRequests() {
-        threadPool = Executors.newFixedThreadPool(concurrentSearches.size());
+        final var threadPool = Executors.newFixedThreadPool(concurrentSearches.size());
         concurrentSearches.forEach(threadPool::execute);
     }
 

@@ -3,7 +3,7 @@ server:
 spotify:
   clientId: 6d1aba85011246b79d00fda8c9902ee3
   secret:
-    filename: spotify-secret.txt
+    filename: spotify-secret
   uri:
     redirect: http://localhost:9090/api/v1/auth/token
   combinator:

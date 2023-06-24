@@ -9,6 +9,7 @@ import walerowicz.pawel.SpotifyFun.authorization.entites.User;
 @RequiredArgsConstructor
 class UserService {
     private static final String GET_USER_ENDPOINT = "me";
+
     private final WebClient webClient;
 
     User importUser(String token) {

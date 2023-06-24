@@ -12,21 +12,21 @@ import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
+@Slf4j
 class PlaylistGenerator {
-
     private static final String CREATE_PLAYLIST_URI = "users/{userId}/playlists";
     private static final String ADD_ITEM_TO_PLAYLIST_URI = "playlists/{playlistId}/tracks";
+
     private final UserService userService;
     private final CombinationMatcher combinationMatcher;
     private final WebClient webClient;
-
 
     PlaylistUrl buildPlaylist(final PlaylistRequest request) {
         final var start = Instant.now();
@@ -34,15 +34,12 @@ class PlaylistGenerator {
         final var inputSentence = request.sentence();
         final var token = request.token();
         final var user = userService.importUser(token);
-
         log.info("Creating playlist '{}' from sentence '{}'", playlistName, inputSentence);
         final var combinationTracks = combinationMatcher.findCombinationWithMatchingTracks(inputSentence, token);
         final var playlist = createNewPlaylist(playlistName, token, user);
-        final var end = Instant.now();
-        final var timeDifference = ((double) Duration.between(start, end).toMillis()) / 1000;
+        logExecutionTime(start);
         final var finalTracks = chooseRandomMatchingTracks(combinationTracks);
-        log.info("Found combination in {} seconds", timeDifference);
-        addToPlaylist(playlist, finalTracks, token);
+        fillToPlaylist(playlist, finalTracks, token);
         return new PlaylistUrl(playlist.externalUrls().url());
     }
 
@@ -53,15 +50,15 @@ class PlaylistGenerator {
                 .post()
                 .uri(builder -> builder.path(CREATE_PLAYLIST_URI).build(user.id()))
                 .headers(httpHeaders -> httpHeaders.setBearerAuth(token))
-                .bodyValue("{\"name\": \"" + playlistName + "\"}")
+                .bodyValue(Collections.singletonMap("name", playlistName))
                 .retrieve()
                 .bodyToMono(Playlist.class)
                 .block();
     }
 
-    private void addToPlaylist(final Playlist playlist,
-                               final List<String> finalTracks,
-                               final String token) {
+    private void fillToPlaylist(final Playlist playlist,
+                                final List<String> finalTracks,
+                                final String token) {
         webClient
                 .post()
                 .uri(builder -> builder.path(ADD_ITEM_TO_PLAYLIST_URI).build(playlist.id()))
@@ -81,5 +78,9 @@ class PlaylistGenerator {
                 .collect(Collectors.toList());
     }
 
-
+    private void logExecutionTime(final Instant start) {
+        final var end = Instant.now();
+        final var timeDifference = ((double) Duration.between(start, end).toMillis()) / 1000;
+        log.info("Found combination in {} seconds", timeDifference);
+    }
 }

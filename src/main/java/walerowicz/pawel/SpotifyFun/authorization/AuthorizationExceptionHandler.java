@@ -1,22 +1,17 @@
 package walerowicz.pawel.SpotifyFun.authorization;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import walerowicz.pawel.SpotifyFun.ApiCallProblem;
 
 @RestControllerAdvice("api/v1/auth")
+@RequiredArgsConstructor
 public class AuthorizationExceptionHandler {
-    private final HttpHeaders responseHeaders = initializeHeaders();
-
-    private HttpHeaders initializeHeaders() {
-        final var headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return headers;
-    }
+    private final HttpHeaders responseHeaders;
 
     @ExceptionHandler(AuthorizationException.class)
     public ResponseEntity<ApiCallProblem> unexpectedEncodingProblem(final AuthorizationException exception) {

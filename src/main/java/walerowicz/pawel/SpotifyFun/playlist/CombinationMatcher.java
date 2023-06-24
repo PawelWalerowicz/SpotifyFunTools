@@ -1,7 +1,7 @@
 package walerowicz.pawel.SpotifyFun.playlist;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import walerowicz.pawel.SpotifyFun.playlist.entities.Combination;
 import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
@@ -13,16 +13,11 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class CombinationMatcher {
     private final ConcurrentRequestProcessor concurrentRequestProcessor;
     private final WordCombiner wordCombiner;
-
-    @Autowired
-    public CombinationMatcher(final ConcurrentRequestProcessor concurrentRequestProcessor, final WordCombiner wordCombiner) {
-        this.concurrentRequestProcessor = concurrentRequestProcessor;
-        this.wordCombiner = wordCombiner;
-    }
 
     List<TracksWithPhrase> findCombinationWithMatchingTracks(final String inputSentence, final String token) {
         final var combinations = wordCombiner.buildCombinations(inputSentence);

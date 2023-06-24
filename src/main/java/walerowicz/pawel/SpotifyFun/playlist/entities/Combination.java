@@ -1,9 +1,14 @@
 package walerowicz.pawel.SpotifyFun.playlist.entities;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
+@Data
 public class Combination implements Comparable<Combination> {
     private final List<String> phraseList;
 
@@ -15,40 +20,17 @@ public class Combination implements Comparable<Combination> {
         this.phraseList = List.of(phraseList);
     }
 
-    public Combination(final Combination leadingPhrases, final String centralPhrase, final Combination tailingPhrases) {
+    public Combination(final Combination leadingPhrases,
+                       final String centralPhrase,
+                       final Combination tailingPhrases) {
         this.phraseList = new ArrayList<>();
         this.phraseList.addAll(leadingPhrases.getPhraseList());
         this.phraseList.add(centralPhrase);
         this.phraseList.addAll(tailingPhrases.getPhraseList());
     }
 
-    public List<String> getPhraseList() {
-        return phraseList;
-    }
-
     @Override
-    public int compareTo(Combination o) {
-        return this.phraseList.size() - o.phraseList.size();
+    public int compareTo(Combination other) {
+        return this.phraseList.size() - other.phraseList.size();
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Combination that = (Combination) o;
-        return Objects.equals(phraseList, that.phraseList);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(phraseList);
-    }
-
-    @Override
-    public String toString() {
-        return "Combination{" +
-                "phraseList=" + phraseList +
-                '}';
-    }
-
 }
