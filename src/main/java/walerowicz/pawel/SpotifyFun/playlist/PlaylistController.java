@@ -15,7 +15,7 @@ import walerowicz.pawel.SpotifyFun.playlist.entities.PlaylistUrl;
 @RequiredArgsConstructor
 @Validated
 public class PlaylistController {
-    private final PlaylistGenerator spotifyService;
+    private final PlaylistService spotifyService;
 
     @PostMapping("/playlist/new")
     public PlaylistUrl createPlaylist(@RequestBody @Valid final PlaylistRequest playlistRequest) {

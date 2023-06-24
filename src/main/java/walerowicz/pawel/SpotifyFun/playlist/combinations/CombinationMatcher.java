@@ -1,8 +1,9 @@
-package walerowicz.pawel.SpotifyFun.playlist;
+package walerowicz.pawel.SpotifyFun.playlist.combinations;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import walerowicz.pawel.SpotifyFun.playlist.concurrent.ConcurrentRequestProcessor;
 import walerowicz.pawel.SpotifyFun.playlist.entities.Combination;
 import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
 
@@ -16,10 +17,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class CombinationMatcher {
+    private static final int WAIT_PERIOD_MS = 1000; // 1s
+
     private final ConcurrentRequestProcessor concurrentRequestProcessor;
     private final WordCombiner wordCombiner;
 
-    List<TracksWithPhrase> findCombinationWithMatchingTracks(final String inputSentence, final String token) {
+    public List<TracksWithPhrase> findCombinationWithMatchingTracks(final String inputSentence, final String token) {
         final var combinations = wordCombiner.buildCombinations(inputSentence);
         final var allQueries = wordCombiner.distinctQueries(combinations);
         final var allMatchingTracks = new CopyOnWriteArraySet<TracksWithPhrase>();
@@ -27,11 +30,7 @@ public class CombinationMatcher {
         List<Combination> workingCombinations;
         do {
             workingCombinations = filterWorkingCombinations(combinations, allMatchingTracks);
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            waitBetweenChecks();
         } while (workingCombinations.isEmpty());
         concurrentRequestProcessor.stopSendingRequests();
         final var chosenCombination = chooseTightestCombination(workingCombinations);
@@ -85,4 +84,11 @@ public class CombinationMatcher {
                 .orElseThrow(() -> new CombinationNotFoundException("Couldn't find combination for given input sentence"));
     }
 
+    private void waitBetweenChecks() {
+        try {
+            Thread.sleep(WAIT_PERIOD_MS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 }

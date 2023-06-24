@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import walerowicz.pawel.SpotifyFun.authorization.entites.User;
+import walerowicz.pawel.SpotifyFun.playlist.combinations.CombinationMatcher;
 import walerowicz.pawel.SpotifyFun.playlist.entities.Playlist;
 import walerowicz.pawel.SpotifyFun.playlist.entities.PlaylistRequest;
 import walerowicz.pawel.SpotifyFun.playlist.entities.PlaylistUrl;
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-class PlaylistGenerator {
+class PlaylistService {
     private static final String CREATE_PLAYLIST_URI = "users/{userId}/playlists";
     private static final String ADD_ITEM_TO_PLAYLIST_URI = "playlists/{playlistId}/tracks";
 

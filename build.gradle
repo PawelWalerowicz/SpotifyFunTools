@@ -22,7 +22,7 @@ dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
 	implementation "org.springframework.boot:spring-boot-starter-webflux:${springBootVersion}"
 	implementation "org.springframework.boot:spring-boot-starter-validation:${springBootVersion}"
-	implementation "dev.failsafe:failsafe:3.3.0"
+	implementation "org.apache.commons:commons-lang3:${apacheCommonsLangVersion}"
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
 	annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 	testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"

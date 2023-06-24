@@ -1,4 +1,4 @@
-package walerowicz.pawel.SpotifyFun;
+package walerowicz.pawel.SpotifyFun.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,9 +17,7 @@ public class ApplicationConfiguration {
     public WebClient apiWebClient() {
         return WebClient.builder()
                 .baseUrl(API_BASE_URI)
-                .defaultHeaders(header -> {
-                    header.setContentType(MediaType.APPLICATION_JSON);
-                })
+                .defaultHeaders(header -> header.setContentType(MediaType.APPLICATION_JSON))
                 .build();
     }
     @Bean("account")

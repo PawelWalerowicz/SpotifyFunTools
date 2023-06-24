@@ -1,9 +1,6 @@
 package walerowicz.pawel.SpotifyFun.playlist.entities;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,10 +11,6 @@ public class Combination implements Comparable<Combination> {
 
     public Combination(final List<String> phraseList) {
         this.phraseList = phraseList;
-    }
-
-    public Combination(final String... phraseList) {
-        this.phraseList = List.of(phraseList);
     }
 
     public Combination(final Combination leadingPhrases,

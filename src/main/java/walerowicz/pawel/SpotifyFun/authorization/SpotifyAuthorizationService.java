@@ -5,11 +5,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import walerowicz.pawel.SpotifyFun.ClientSecretLoader;
+import reactor.core.publisher.Mono;
+import walerowicz.pawel.SpotifyFun.configuration.ClientSecretLoader;
 import walerowicz.pawel.SpotifyFun.authorization.entites.SpotifyAccessToken;
 import walerowicz.pawel.SpotifyFun.authorization.entites.TokenRequest;
+import walerowicz.pawel.SpotifyFun.playlist.concurrent.TooManyRequestsException;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -44,8 +47,16 @@ public class SpotifyAuthorizationService {
                 .post()
                 .headers(httpHeaders -> httpHeaders.setBasicAuth(encodedCredentials))
                 .bodyValue(new TokenRequest(GRANT_TYPE, authorizationCode, redirectURI).toMultiValueMap())
-                .retrieve()
-                .bodyToMono(SpotifyAccessToken.class)
+                .exchangeToMono(response -> {
+                    final var httpStatusCode = response.statusCode();
+                    if (httpStatusCode.equals(HttpStatus.TOO_MANY_REQUESTS)) {
+                        return Mono.error(new TooManyRequestsException());
+                    } else if (httpStatusCode.equals(HttpStatus.UNAUTHORIZED)) {
+                        return Mono.error(new AuthorizationException("Invalid authorization token"));
+                    } else {
+                        return response.bodyToMono(SpotifyAccessToken.class);
+                    }
+                })
                 .block();
     }
 

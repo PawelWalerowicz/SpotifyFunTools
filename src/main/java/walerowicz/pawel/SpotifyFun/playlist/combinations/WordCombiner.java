@@ -1,6 +1,7 @@
-package walerowicz.pawel.SpotifyFun.playlist;
+package walerowicz.pawel.SpotifyFun.playlist.combinations;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import walerowicz.pawel.SpotifyFun.playlist.entities.Combination;
@@ -10,6 +11,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+public
 class WordCombiner {
     @Value("${spotify.combinator.words.limit}")
     private final int joinLimit;
@@ -18,7 +20,8 @@ class WordCombiner {
 
     //when joinLimit >= <single words in input sentence> expected amount of combinations equals to 2^(<amount of words> -1)
     List<Combination> buildCombinations(final String inputSentence) {
-        final var singleWords = splitSentence(inputSentence);
+        final var strippedAccents = StringUtils.stripAccents(inputSentence);
+        final var singleWords = splitSentence(strippedAccents);
         return combine(singleWords);
     }
 
@@ -38,7 +41,7 @@ class WordCombiner {
     }
 
     private List<Combination> combine(final List<String> allWords) {
-        List<Combination> allCombinations = new ArrayList<Combination>();
+        List<Combination> allCombinations = new ArrayList<>();
         allCombinations.add(new Combination(allWords));
         for (int joinedWords = 2; joinedWords <= Math.min(joinLimit, allWords.size()); joinedWords++) {
             allCombinations.addAll(combineForJoinedWords(joinedWords, allWords));
