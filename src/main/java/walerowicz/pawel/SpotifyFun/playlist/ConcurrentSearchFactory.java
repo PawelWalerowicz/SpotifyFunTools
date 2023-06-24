@@ -16,7 +16,7 @@ class ConcurrentSearchFactory {
     private final RetryPolicyConfiguration retryPolicyConfiguration;
 
     @Autowired
-    ConcurrentSearchFactory(@Value("${spotify.search.track}") final String searchForTrackURL,
+    ConcurrentSearchFactory(@Value("${spotify.uri.search.track}") final String searchForTrackURL,
                             @Value("${spotify.combinator.cleanup.regex}") final String cleanupRegex,
                             final SpotifyAuthorizationService spotifyAuthorizationService,
                             final RetryPolicyConfiguration retryPolicyConfiguration) {
@@ -31,7 +31,7 @@ class ConcurrentSearchFactory {
                 query,
                 searchForTrackURL,
                 cleanupRegex,
-                new SpotifyAPIRequest(spotifyAuthorizationService, retryPolicyConfiguration),
+                token,
                 outputSet
         );
     }

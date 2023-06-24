@@ -51,7 +51,8 @@ class SpotifyAPIRequest {
     private HttpHeaders buildRequestHeader() {
         final HttpHeaders header = new HttpHeaders();
         header.setContentType(MediaType.APPLICATION_JSON);
-        header.set("Authorization", "Bearer " + spotifyAuthorizationService.getAccessToken().getToken());
+//        header.set("Authorization", "Bearer " + spotifyAuthorizationService.getAccessToken().getToken());
+        header.set("Authorization", "Bearer " + "token");
         return header;
     }
 }

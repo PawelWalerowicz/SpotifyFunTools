@@ -20,19 +20,19 @@ class ConcurrentSearch implements Runnable {
     private final String query;
     private final String searchForTrackURL;
     private final String cleanupRegex;
-    private final SpotifyAPIRequest spotifyAPIRequest;
+    private final String token;
     private final Set<TracksWithPhrase> outputSet;
 
     ConcurrentSearch(final String query,
                      final String searchForTrackURL,
                      final String cleanupRegex,
-                     final SpotifyAPIRequest spotifyAPIRequest,
+                     final String token,
                      final Set<TracksWithPhrase> outputSet
     ) {
         this.query = query;
         this.searchForTrackURL = searchForTrackURL;
         this.cleanupRegex = cleanupRegex;
-        this.spotifyAPIRequest = spotifyAPIRequest;
+        this.token = token;
         this.outputSet = outputSet;
     }
 

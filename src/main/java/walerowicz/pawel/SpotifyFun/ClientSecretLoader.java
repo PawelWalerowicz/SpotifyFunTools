@@ -17,7 +17,7 @@ public class ClientSecretLoader {
                                                 .getResourceAsStream(fileName);
             final var scanner = new Scanner(Objects.requireNonNull(resourceAsStream));
             return scanner.nextLine();
-        } catch (NullPointerException e) {
+        } catch (final NullPointerException e) {
             throw new AuthorizationException("Exception occurred during retrieval of client secret " +
                     "for required authorization. Check resources for file " + fileName, e);
         }

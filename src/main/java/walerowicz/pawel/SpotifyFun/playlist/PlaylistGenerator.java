@@ -1,17 +1,15 @@
 package walerowicz.pawel.SpotifyFun.playlist;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import walerowicz.pawel.SpotifyFun.authorization.entites.User;
 import walerowicz.pawel.SpotifyFun.playlist.entities.Playlist;
+import walerowicz.pawel.SpotifyFun.playlist.entities.PlaylistRequest;
 import walerowicz.pawel.SpotifyFun.playlist.entities.PlaylistUrl;
 import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -20,53 +18,58 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 class PlaylistGenerator {
-    private final SpotifyAPIRequest spotifyAPIRequest;
+
+    private static final String CREATE_PLAYLIST_URI = "users/{userId}/playlists";
+    private static final String ADD_ITEM_TO_PLAYLIST_URI = "playlists/{playlistId}/tracks";
     private final UserService userService;
     private final CombinationMatcher combinationMatcher;
-    private final String createPlaylistURL;
-    private final String addItemToPlaylistURL;
+    private final WebClient webClient;
 
-    @Autowired
-    public PlaylistGenerator(final SpotifyAPIRequest spotifyAPIRequest,
-                             final UserService userService,
-                             final CombinationMatcher combinationMatcher,
-                             @Value("${spotify.playlist.create}") final String createPlaylistURL,
-                             @Value("${spotify.playlist.item.add}") final String addItemToPlaylistURL) {
-        this.spotifyAPIRequest = spotifyAPIRequest;
-        this.userService = userService;
-        this.combinationMatcher = combinationMatcher;
-        this.createPlaylistURL = createPlaylistURL;
-        this.addItemToPlaylistURL = addItemToPlaylistURL;
-    }
 
-    PlaylistUrl buildPlaylist(final String playlistName, final String inputSentence)
-            throws URISyntaxException, JsonProcessingException, CombinationNotFoundException {
+    PlaylistUrl buildPlaylist(final PlaylistRequest request) {
         final var start = Instant.now();
+        final var playlistName = request.name();
+        final var inputSentence = request.sentence();
+        final var token = request.token();
+        final var user = userService.importUser(token);
+
         log.info("Creating playlist '{}' from sentence '{}'", playlistName, inputSentence);
         final var combinationTracks = combinationMatcher.findCombinationWithMatchingTracks(inputSentence);
-        final var playlist = createNewPlaylist(playlistName);
+        final var playlist = createNewPlaylist(playlistName, token, user);
         final var end = Instant.now();
-        double timeDifference = ((double) Duration.between(start, end).toMillis()) / 1000;
+        final var timeDifference = ((double) Duration.between(start, end).toMillis()) / 1000;
+        final var finalTracks = chooseRandomMatchingTracks(combinationTracks);
         log.info("Found combination in {} seconds", timeDifference);
-        addToPlaylist(playlist, combinationTracks);
+        addToPlaylist(playlist, finalTracks, token);
         return new PlaylistUrl(playlist.externalUrls().url());
     }
 
-    private Playlist createNewPlaylist(final String playlistName) throws URISyntaxException {
-        final var user = userService.importUser();
-        final var request = new URI(createPlaylistURL.replace("<USER_ID>", user.id()));
-        final var body = "{\"name\": \"" + playlistName + "\"}";
-        return spotifyAPIRequest.post(request, body, Playlist.class);
+    private Playlist createNewPlaylist(final String playlistName,
+                                       final String token,
+                                       final User user) {
+        return webClient
+                .post()
+                .uri(builder -> builder.path(CREATE_PLAYLIST_URI).build(user.id()))
+                .headers(httpHeaders -> httpHeaders.setBearerAuth(token))
+                .bodyValue("{\"name\": \"" + playlistName + "\"}")
+                .retrieve()
+                .bodyToMono(Playlist.class)
+                .block();
     }
 
-    private void addToPlaylist(final Playlist playlist, final List<TracksWithPhrase> tracks)
-            throws URISyntaxException, JsonProcessingException {
-        final var finalTracks = chooseRandomMatchingTracks(tracks);
-        final var objectMapper = new ObjectMapper();
-        final var body = objectMapper.writeValueAsString(finalTracks);
-        final var request = new URI(addItemToPlaylistURL.replace("<PLAYLIST_ID>", playlist.id()));
-        spotifyAPIRequest.post(request, body, String.class);
+    private void addToPlaylist(final Playlist playlist,
+                               final List<String> finalTracks,
+                               final String token) {
+        webClient
+                .post()
+                .uri(builder -> builder.path(ADD_ITEM_TO_PLAYLIST_URI).build(playlist.id()))
+                .headers(httpHeaders -> httpHeaders.setBearerAuth(token))
+                .bodyValue(finalTracks)
+                .retrieve()
+                .toBodilessEntity()
+                .block();
     }
 
     private List<String> chooseRandomMatchingTracks(final List<TracksWithPhrase> tracks) {

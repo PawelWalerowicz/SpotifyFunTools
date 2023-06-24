@@ -2,10 +2,11 @@ package walerowicz.pawel.SpotifyFun.authorization;
 
 public class AuthorizationException extends RuntimeException {
 
-    public AuthorizationException(String message) {
+    public AuthorizationException(final String message) {
         super(message);
     }
-    public AuthorizationException(String message, Throwable cause) {
+
+    public AuthorizationException(final String message, final Throwable cause) {
         super(message, cause);
     }
 }

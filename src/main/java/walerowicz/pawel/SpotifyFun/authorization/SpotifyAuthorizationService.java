@@ -1,98 +1,81 @@
 package walerowicz.pawel.SpotifyFun.authorization;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 import walerowicz.pawel.SpotifyFun.ClientSecretLoader;
 import walerowicz.pawel.SpotifyFun.authorization.entites.SpotifyAccessToken;
+import walerowicz.pawel.SpotifyFun.authorization.entites.TokenRequest;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Base64;
-import java.util.List;
-import java.util.Optional;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Service
+@Slf4j
 public class SpotifyAuthorizationService {
+    private static final String GRANT_TYPE = "authorization_code";
+    private static final String TOKEN_URI = "https://accounts.spotify.com/api/token";
+    private static final String AUTH_URI = "https://accounts.spotify.com/authorize";
     private final ClientSecretLoader clientSecretLoader;
     private final String clientId;
-    private final String grantType;
     private final String redirectURI;
-    private final String tokenURL;
-    private final String authorizeURL;
-    private Optional<SpotifyAccessToken> accessToken;
     private final String spotifySecretFilename;
+    private final WebClient webClient;
 
-    @Autowired
-    SpotifyAuthorizationService(final ClientSecretLoader clientSecretLoader,
+    public SpotifyAuthorizationService(final ClientSecretLoader clientSecretLoader,
                                        @Value("${spotify.clientId}") final String clientId,
-                                       @Value("${spotify.grantType}") final String grantType,
-                                       @Value("${spotify.redirectURI}") final String redirectURI,
-                                       @Value("${spotify.tokenURL}") final String tokenURL,
-                                       @Value("${spotify.authorizeURL}") final String authorizeURL,
-                                @Value("${spotify.secret.filename}") final String spotifySecretFilename) {
+                                       @Value("${spotify.uri.redirect}") final String redirectURI,
+                                       @Value("${spotify.secret.filename}") final String spotifySecretFilename) {
         this.clientSecretLoader = clientSecretLoader;
         this.clientId = clientId;
-        this.grantType = grantType;
         this.redirectURI = redirectURI;
-        this.tokenURL = tokenURL;
-        this.authorizeURL = authorizeURL;
         this.spotifySecretFilename = spotifySecretFilename;
+        this.webClient = initializeWebClient();
     }
 
-    public SpotifyAccessToken getAccessToken()  {
-        return accessToken.orElseThrow(() -> new AuthorizationException(
-                "Access token hasn't been created. Please login first."));
+    public String getAuthorizationCodeURL() {
+        try {
+            return AUTH_URI + "?" + tryBuildParams();
+        } catch (UnsupportedEncodingException e) {
+            log.error("Exception occurred during build request params for AuthCode request", e);
+            throw new AuthorizationException("Exception occurred during request building process. Please try again later");
+        }
     }
 
-    String getUserAuthorizationURL() throws UnsupportedEncodingException {
-        final var arguments = "client_id=" + clientId
+    public SpotifyAccessToken fetchAccessToken(final String authorizationCode) {
+        return webClient
+                .post()
+                .bodyValue(new TokenRequest(GRANT_TYPE, authorizationCode, redirectURI).toMultiValueMap())
+                .retrieve()
+                .bodyToMono(SpotifyAccessToken.class)
+                .block();
+    }
+
+    private String tryBuildParams() throws UnsupportedEncodingException {
+        return "client_id=" + clientId
                 + "&response_type=code"
                 + "&redirect_uri=" + URLEncoder.encode(redirectURI, UTF_8.toString())
                 + "&scope=playlist-modify-public";
-        return authorizeURL + "?" + arguments;
     }
 
-    public void retrieveAccessToken(String authorizationCode) {
-        final var restTemplate = new RestTemplate();
-        final var responseEntity = restTemplate.exchange(tokenURL,
-                                                                                        HttpMethod.POST,
-                                                                                        buildHttpEntity(authorizationCode),
-                                                                                        SpotifyAccessToken.class);
-        this.accessToken = Optional.ofNullable(responseEntity.getBody());    //TODO: include refreshing SOMEWHERE
-    }
-
-    private HttpEntity<MultiValueMap<String, String>> buildHttpEntity(final String authorizationCode) {
-        return new HttpEntity<>(buildRequestBody(authorizationCode), buildRequestHeader());
-    }
-
-    private MultiValueMap<String, String> buildRequestBody(final String authorizationCode) {
-        var bodyValues = new LinkedMultiValueMap<String, String>();
-        bodyValues.put("grant_type", List.of(grantType));
-        bodyValues.put("code", List.of(authorizationCode));
-        bodyValues.put("redirect_uri", List.of(redirectURI));
-        return bodyValues;
-    }
-
-    private HttpHeaders buildRequestHeader() {
-        var header = new HttpHeaders();
-        header.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        header.set("Authorization", buildEncodedAuthorizationValue());
-        return header;
+    private WebClient initializeWebClient() {
+        return WebClient.builder()
+                .baseUrl(TOKEN_URI)
+                .defaultHeaders(header -> {
+                    header.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+                    header.set("Authorization", buildEncodedAuthorizationValue());
+                })
+                .build();
     }
 
     private String buildEncodedAuthorizationValue() {
-        final String plainClientCredentials = clientId + ":" + clientSecretLoader.loadClientSecret(spotifySecretFilename);
-        final String encodedClientCredentials = Base64.getEncoder().encodeToString(plainClientCredentials.getBytes());
+        final var plainClientCredentials = clientId + ":" + clientSecretLoader.loadClientSecret(spotifySecretFilename);
+        final var encodedClientCredentials = Base64.getEncoder().encodeToString(plainClientCredentials.getBytes());
         return "Basic " + encodedClientCredentials;
     }
 }

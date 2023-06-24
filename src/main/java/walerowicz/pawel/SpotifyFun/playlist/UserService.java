@@ -1,24 +1,23 @@
 package walerowicz.pawel.SpotifyFun.playlist;
 
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 import walerowicz.pawel.SpotifyFun.authorization.entites.User;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
 @Service
+@RequiredArgsConstructor
 class UserService {
-    final SpotifyAPIRequest spotifyAPIRequest;
-    private final URI getUserRequestURI;
+    private static final String GET_USER_ENDPOINT = "me";
+    private final WebClient webClient;
 
-    UserService(@Value("${spotify.user.profileURL}") final String userProfileURL,
-                       final SpotifyAPIRequest spotifyAPIRequest) throws URISyntaxException {
-        this.getUserRequestURI = new URI(userProfileURL);
-        this.spotifyAPIRequest = spotifyAPIRequest;
-    }
-
-    User importUser() {
-        return spotifyAPIRequest.get(getUserRequestURI, User.class);
+    User importUser(String token) {
+        return webClient
+                .get()
+                .uri(GET_USER_ENDPOINT)
+                .headers(httpHeaders -> httpHeaders.setBearerAuth(token))
+                .retrieve()
+                .bodyToMono(User.class)
+                .block();
     }
 }
