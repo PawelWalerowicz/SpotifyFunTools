@@ -2,12 +2,14 @@ package walerowicz.pawel.SpotifyFun.playlist.entities;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
 @Data
+@Slf4j
 public class FoundTracksResultPackage {
     @JsonAlias("href")
     private URI currentURL;

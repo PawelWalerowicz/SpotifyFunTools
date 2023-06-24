@@ -24,11 +24,11 @@ public class CombinationMatcher {
         this.wordCombiner = wordCombiner;
     }
 
-    List<TracksWithPhrase> findCombinationWithMatchingTracks(final String inputSentence) {
+    List<TracksWithPhrase> findCombinationWithMatchingTracks(final String inputSentence, final String token) {
         final var combinations = wordCombiner.buildCombinations(inputSentence);
         final var allQueries = wordCombiner.distinctQueries(combinations);
         final var allMatchingTracks = new CopyOnWriteArraySet<TracksWithPhrase>();
-        concurrentRequestProcessor.sendConcurrentRequests(allQueries, allMatchingTracks);
+        concurrentRequestProcessor.sendConcurrentRequests(allQueries, token, allMatchingTracks);
         List<Combination> workingCombinations;
         do {
             workingCombinations = filterWorkingCombinations(combinations, allMatchingTracks);

@@ -36,7 +36,7 @@ class PlaylistGenerator {
         final var user = userService.importUser(token);
 
         log.info("Creating playlist '{}' from sentence '{}'", playlistName, inputSentence);
-        final var combinationTracks = combinationMatcher.findCombinationWithMatchingTracks(inputSentence);
+        final var combinationTracks = combinationMatcher.findCombinationWithMatchingTracks(inputSentence, token);
         final var playlist = createNewPlaylist(playlistName, token, user);
         final var end = Instant.now();
         final var timeDifference = ((double) Duration.between(start, end).toMillis()) / 1000;
