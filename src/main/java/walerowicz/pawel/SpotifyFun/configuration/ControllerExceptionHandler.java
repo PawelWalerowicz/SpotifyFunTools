@@ -22,7 +22,7 @@ public class ControllerExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiCallProblem> missingBodyProblem() {
         return new ResponseEntity<>(
-                new ApiCallProblem("Request must contain a body with playlist name, sentence to map and valid authorization token."),
+                new ApiCallProblem("Request must contain a body with playlist name, sentence to transform and valid authorization token."),
                 responseHeaders,
                 HttpStatus.BAD_REQUEST);
     }

@@ -58,7 +58,7 @@ class ConcurrentSearch implements Runnable {
     private List<Track> searchForTracks() {
         initState();
         do {
-            log.info("Searching for '{}' ({} attempt)", query, attemptCounter);
+            log.debug("Searching for '{}' ({} attempt)", query, attemptCounter);
             try {
                 var fetchTracksResult = fetchTracks();
                 filterTracks(fetchTracksResult);

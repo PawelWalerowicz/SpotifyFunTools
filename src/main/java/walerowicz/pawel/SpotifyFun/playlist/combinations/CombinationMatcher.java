@@ -33,6 +33,7 @@ public class CombinationMatcher {
             waitBetweenChecks();
         } while (workingCombinations.isEmpty());
         concurrentRequestProcessor.stopSendingRequests();
+        log.info("Found {} matching combinations", workingCombinations.size());
         final var chosenCombination = chooseTightestCombination(workingCombinations);
         final var combinationPhrases = chosenCombination.getPhraseList();
         log.info("Shortest found combination: {}", combinationPhrases);
