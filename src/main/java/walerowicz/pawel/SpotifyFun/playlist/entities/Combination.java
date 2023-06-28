@@ -13,6 +13,10 @@ public class Combination implements Comparable<Combination> {
         this.phraseList = phraseList;
     }
 
+    public Combination(final String... phraseList) {
+        this.phraseList = List.of(phraseList);
+    }
+
     public Combination(final Combination leadingPhrases,
                        final String centralPhrase,
                        final Combination tailingPhrases) {

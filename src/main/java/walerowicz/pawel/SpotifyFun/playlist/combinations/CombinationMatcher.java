@@ -3,7 +3,7 @@ package walerowicz.pawel.SpotifyFun.playlist.combinations;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import walerowicz.pawel.SpotifyFun.playlist.concurrent.ConcurrentRequestProcessor;
+import walerowicz.pawel.SpotifyFun.playlist.concurrent.search.ConcurrentRequestProcessor;
 import walerowicz.pawel.SpotifyFun.playlist.entities.Combination;
 import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
 

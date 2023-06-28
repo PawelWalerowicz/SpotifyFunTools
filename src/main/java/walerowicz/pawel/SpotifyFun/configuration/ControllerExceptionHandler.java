@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import walerowicz.pawel.SpotifyFun.authorization.AuthorizationException;
 import walerowicz.pawel.SpotifyFun.playlist.combinations.CombinationNotFoundException;
-import walerowicz.pawel.SpotifyFun.playlist.concurrent.TooManyRequestsException;
+import walerowicz.pawel.SpotifyFun.playlist.concurrent.search.TooManyRequestsException;
 
 import java.util.List;
 

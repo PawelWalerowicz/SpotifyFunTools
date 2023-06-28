@@ -1,4 +1,4 @@
-package walerowicz.pawel.SpotifyFun.playlist.concurrent;
+package walerowicz.pawel.SpotifyFun.playlist.concurrent.search;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
