@@ -3,6 +3,7 @@ package walerowicz.pawel.SpotifyFun.playlist.combinations;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import walerowicz.pawel.SpotifyFun.playlist.TracksNotFoundException;
 import walerowicz.pawel.SpotifyFun.playlist.concurrent.search.ConcurrentRequestProcessor;
 import walerowicz.pawel.SpotifyFun.playlist.entities.Combination;
 import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
@@ -62,10 +63,10 @@ public class CombinationMatcher {
                 .collect(Collectors.toSet());
     }
 
-    private Combination chooseTightestCombination(List<Combination> workingCombinations) throws CombinationNotFoundException {
+    private Combination chooseTightestCombination(List<Combination> workingCombinations) {
         return workingCombinations.stream()
                 .min(Combination::compareTo)
-                .orElseThrow(() -> new CombinationNotFoundException("Couldn't find combination for given input sentence"));
+                .orElseThrow(() -> new TracksNotFoundException("Couldn't find combination for given input sentence"));
     }
 
     private boolean allMatchingTracksFound(final Combination combination, final Set<String> tracksPhrases) {
@@ -82,7 +83,7 @@ public class CombinationMatcher {
         return tracksWithPhrase.stream()
                 .filter(tracks -> tracks.phrase().equalsIgnoreCase(phrase))
                 .findFirst()
-                .orElseThrow(() -> new CombinationNotFoundException("Couldn't find combination for given input sentence"));
+                .orElseThrow(() -> new TracksNotFoundException("Couldn't find combination for given input sentence"));
     }
 
     private void waitBetweenChecks() {

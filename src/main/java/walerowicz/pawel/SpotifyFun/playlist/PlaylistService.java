@@ -38,10 +38,13 @@ class PlaylistService {
         final var user = userService.importUser(token);
         log.info("Creating playlist '{}' from sentence '{}'", playlistName, inputSentence);
         final var combinationTracks = combinationMatcher.findCombinationWithMatchingTracks(inputSentence, token);
+        if (combinationTracks.size() == 0) {
+            throw new TracksNotFoundException("Couldn't find trucks for given input sentence");
+        }
         final var playlist = createNewPlaylist(playlistName, token, user);
-        logExecutionTime(start);
         final var finalTracks = chooseRandomMatchingTracks(combinationTracks);
-        fillToPlaylist(playlist, finalTracks, token);
+        addTracksToPlaylist(playlist, finalTracks, token);
+        logExecutionTime(start);
         return new PlaylistUrl(playlist.externalUrls().url());
     }
 
@@ -58,9 +61,9 @@ class PlaylistService {
                 .block();
     }
 
-    private void fillToPlaylist(final Playlist playlist,
-                                final List<String> finalTracks,
-                                final String token) {
+    private void addTracksToPlaylist(final Playlist playlist,
+                                     final List<String> finalTracks,
+                                     final String token) {
         webClient
                 .post()
                 .uri(builder -> builder.path(ADD_ITEM_TO_PLAYLIST_URI).build(playlist.id()))

@@ -1,0 +1,39 @@
+{
+  "collaborative": false,
+  "description": null,
+  "external_urls": {
+    "spotify": "https://open.spotify.com/playlist/playlist-id"
+  },
+  "followers": {
+    "href": null,
+    "total": 0
+  },
+  "href": "https://api.spotify.com/v1/playlists/playlist-id",
+  "id": "playlist-id",
+  "images": [],
+  "name": "Test Playlist",
+  "owner": {
+    "display_name": "Test user",
+    "external_urls": {
+      "spotify": "https://open.spotify.com/user/user-id"
+    },
+    "href": "https://api.spotify.com/v1/users/user-id",
+    "id": "user-id",
+    "type": "user",
+    "uri": "spotify:user:user-id"
+  },
+  "primary_color": null,
+  "public": true,
+  "snapshot_id": "MSxjZDBmMDhlMzQwZmYwYmYwMTI1ZTNmMjViM2IwMjBhMzZhZmVmYzNh",
+  "tracks": {
+    "href": "https://api.spotify.com/v1/playlists/playlist-id/tracks",
+    "items": [],
+    "limit": 100,
+    "next": null,
+    "offset": 0,
+    "previous": null,
+    "total": 0
+  },
+  "type": "playlist",
+  "uri": "spotify:playlist:uri"
+}

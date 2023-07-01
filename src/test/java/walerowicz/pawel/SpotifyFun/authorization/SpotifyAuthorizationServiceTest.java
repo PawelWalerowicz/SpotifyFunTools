@@ -1,7 +1,5 @@
 package walerowicz.pawel.SpotifyFun.authorization;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterAll;
@@ -14,7 +12,6 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
-import walerowicz.pawel.SpotifyFun.authorization.entites.SpotifyAccessToken;
 import walerowicz.pawel.SpotifyFun.configuration.ClientSecretLoader;
 import walerowicz.pawel.SpotifyFun.playlist.concurrent.search.TooManyRequestsException;
 
@@ -31,18 +28,13 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class SpotifyAuthorizationServiceTest {
     private SpotifyAuthorizationService service;
-
-    private static ObjectMapper objectMapper;
-
     private static MockWebServer mockWebServer;
 
     @Mock
     private ClientSecretLoader secretLoader;
 
-
     @BeforeAll
     static void beforeAll() throws IOException {
-        objectMapper = new ObjectMapper();
         mockWebServer = new MockWebServer();
         mockWebServer.start();
     }
@@ -79,7 +71,7 @@ class SpotifyAuthorizationServiceTest {
     }
 
     @Test
-    void shouldThrowAuthorizationExceptionWhenUnsupportedEncodingExceptionsOccurredDuringParamBuilding() {
+    void setAuthorizationCodeUrlShouldThrowAuthorizationExceptionWhenUnsupportedEncodingExceptionsOccurredDuringParamBuilding() {
         try (MockedStatic<URLEncoder> urlEncoderMockedStatic = mockStatic(URLEncoder.class)) {
             urlEncoderMockedStatic.when(() -> URLEncoder.encode(any(String.class), any(String.class)))
                     .thenThrow(new UnsupportedEncodingException("test exception"));
@@ -89,11 +81,16 @@ class SpotifyAuthorizationServiceTest {
     }
 
     @Test
-    void fetchAccessTokenShouldSendPostRequest() throws JsonProcessingException, InterruptedException {
-        final var expectedToken = new SpotifyAccessToken("test-token", "test-refresh-token", 1, "test-scope");
+    void fetchAccessTokenShouldSendPostRequest() throws InterruptedException {
+        final var expectedTokenJSON =
+                "{" +
+                        "\"access_token\": \"TEST_TOKEN\"," +
+                        "\"token_type\": \"Bearer\"," +
+                        "\"expires_in\": 3600" +
+                        "}";
         final var mockResponse = new MockResponse()
                 .addHeader("Content-Type", "application/json")
-                .setBody(objectMapper.writeValueAsString(expectedToken))
+                .setBody(expectedTokenJSON)
                 .setResponseCode(200);
         mockWebServer.enqueue(mockResponse);
 
@@ -104,15 +101,19 @@ class SpotifyAuthorizationServiceTest {
     }
 
     @Test
-    void fetchAccessTokenShouldSendRequestWithEncodedCredentialsInHeader() throws JsonProcessingException, InterruptedException {
-        final var expectedToken = new SpotifyAccessToken("test-token", "test-refresh-token", 1, "test-scope");
+    void fetchAccessTokenShouldSendRequestWithEncodedCredentialsInHeader() throws InterruptedException {
+        final var expectedTokenJSON =
+                "{" +
+                        "\"access_token\": \"TEST_TOKEN\"," +
+                        "\"token_type\": \"Bearer\"," +
+                        "\"expires_in\": 3600" +
+                        "}";
         final var encodedCredentials = Base64.getEncoder().encodeToString("clientId:test-secret".getBytes());
         final var mockResponse = new MockResponse()
                 .addHeader("Content-Type", "application/json")
-                .setBody(objectMapper.writeValueAsString(expectedToken))
+                .setBody(expectedTokenJSON)
                 .setResponseCode(200);
         mockWebServer.enqueue(mockResponse);
-
         service.fetchAccessToken("test-auth-code");
 
         final var recordedRequest = mockWebServer.takeRequest();
@@ -120,7 +121,7 @@ class SpotifyAuthorizationServiceTest {
     }
 
     @Test
-    void shouldThrowTooManyRequestsExceptionWhenResponseStatusCodeIs429() {
+    void fetchAccessTokenShouldThrowTooManyRequestsExceptionWhenResponseStatusCodeIs429() {
         final var mockResponse = new MockResponse().setResponseCode(429);
         mockWebServer.enqueue(mockResponse);
 
@@ -128,7 +129,7 @@ class SpotifyAuthorizationServiceTest {
     }
 
     @Test
-    void shouldThrowAuthorizationExceptionWhenResponseStatusCodeIs401() {
+    void fetchAccessTokenShouldThrowAuthorizationExceptionWhenResponseStatusCodeIs401() {
         final var mockResponse = new MockResponse().setResponseCode(401);
         mockWebServer.enqueue(mockResponse);
 
