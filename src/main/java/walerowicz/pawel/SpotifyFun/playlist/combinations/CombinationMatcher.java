@@ -26,8 +26,7 @@ public class CombinationMatcher {
     public List<TracksWithPhrase> findCombinationWithMatchingTracks(final String inputSentence, final String token) {
         final var combinations = wordCombiner.buildCombinations(inputSentence);
         final var allQueries = wordCombiner.distinctQueries(combinations);
-        final var allMatchingTracks = new CopyOnWriteArraySet<TracksWithPhrase>();
-        concurrentRequestProcessor.sendConcurrentRequests(allQueries, token, allMatchingTracks);
+        final var allMatchingTracks = concurrentRequestProcessor.sendConcurrentRequests(allQueries, token);
         List<Combination> workingCombinations;
         do {
             workingCombinations = filterWorkingCombinations(combinations, allMatchingTracks);

@@ -2,14 +2,15 @@ package walerowicz.pawel.SpotifyFun.playlist;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+import walerowicz.pawel.SpotifyFun.authorization.AuthorizationException;
 import walerowicz.pawel.SpotifyFun.authorization.entites.User;
 import walerowicz.pawel.SpotifyFun.playlist.combinations.CombinationMatcher;
-import walerowicz.pawel.SpotifyFun.playlist.entities.Playlist;
-import walerowicz.pawel.SpotifyFun.playlist.entities.PlaylistRequest;
-import walerowicz.pawel.SpotifyFun.playlist.entities.PlaylistUrl;
-import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
+import walerowicz.pawel.SpotifyFun.playlist.concurrent.search.TooManyRequestsException;
+import walerowicz.pawel.SpotifyFun.playlist.entities.*;
 import walerowicz.pawel.SpotifyFun.user.UserService;
 
 import java.time.Duration;
@@ -56,8 +57,16 @@ class PlaylistService {
                 .uri(builder -> builder.path(CREATE_PLAYLIST_URI).build(user.id()))
                 .headers(httpHeaders -> httpHeaders.setBearerAuth(token))
                 .bodyValue(Collections.singletonMap("name", playlistName))
-                .retrieve()
-                .bodyToMono(Playlist.class)
+                .exchangeToMono(response -> {
+                    final var httpStatusCode = response.statusCode();
+                    if (httpStatusCode.equals(HttpStatus.TOO_MANY_REQUESTS)) {
+                        return Mono.error(new TooManyRequestsException());
+                    } else if (httpStatusCode.equals(HttpStatus.UNAUTHORIZED)) {
+                        return Mono.error(new AuthorizationException("Web token expired"));
+                    } else {
+                        return response.bodyToMono(Playlist.class);
+                    }
+                })
                 .block();
     }
 
@@ -69,8 +78,16 @@ class PlaylistService {
                 .uri(builder -> builder.path(ADD_ITEM_TO_PLAYLIST_URI).build(playlist.id()))
                 .headers(httpHeaders -> httpHeaders.setBearerAuth(token))
                 .bodyValue(finalTracks)
-                .retrieve()
-                .toBodilessEntity()
+                .exchangeToMono(response -> {
+                    final var httpStatusCode = response.statusCode();
+                    if (httpStatusCode.equals(HttpStatus.TOO_MANY_REQUESTS)) {
+                        return Mono.error(new TooManyRequestsException());
+                    } else if (httpStatusCode.equals(HttpStatus.UNAUTHORIZED)) {
+                        return Mono.error(new AuthorizationException("Web token expired"));
+                    } else {
+                        return response.toBodilessEntity();
+                    }
+                })
                 .block();
     }
 

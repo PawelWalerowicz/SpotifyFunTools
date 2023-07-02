@@ -25,11 +25,8 @@ class UserServiceTest {
 
     private static MockWebServer mockWebServer;
 
-    private static ObjectMapper objectMapper;
-
     @BeforeAll
     static void setUp() throws IOException {
-        objectMapper = new ObjectMapper();
         mockWebServer = new MockWebServer();
         mockWebServer.start();
     }
@@ -48,11 +45,10 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldSendSpotifyApiRequestToMeEndpoint() throws JsonProcessingException, InterruptedException {
-        final var testUser = new User("Test user id");
+    void shouldSendSpotifyApiRequestToMeEndpoint() throws InterruptedException {
         final var mockResponse = new MockResponse()
                 .addHeader("Content-Type", "application/json")
-                .setBody(objectMapper.writeValueAsString(testUser))
+                .setBody("{\"id\":\"Test user id\"}")
                 .setResponseCode(200);
         mockWebServer.enqueue(mockResponse);
 
@@ -62,11 +58,10 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldSendSpotifyApiRequestWithTokenInAuthorizationHeader() throws JsonProcessingException, InterruptedException {
-        final var testUser = new User("Test user id");
+    void shouldSendSpotifyApiRequestWithTokenInAuthorizationHeader() throws InterruptedException {
         final var mockResponse = new MockResponse()
                 .addHeader("Content-Type", "application/json")
-                .setBody(objectMapper.writeValueAsString(testUser))
+                .setBody("{\"id\":\"Test user id\"}")
                 .setResponseCode(200);
         mockWebServer.enqueue(mockResponse);
 
@@ -76,11 +71,10 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldSendGetRequest() throws JsonProcessingException, InterruptedException {
-        final var testUser = new User("Test user id");
+    void shouldSendGetRequest() throws InterruptedException {
         final var mockResponse = new MockResponse()
                 .addHeader("Content-Type", "application/json")
-                .setBody(objectMapper.writeValueAsString(testUser))
+                .setBody("{\"id\":\"Test user id\"}")
                 .setResponseCode(200);
         mockWebServer.enqueue(mockResponse);
 

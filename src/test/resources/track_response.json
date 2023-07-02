@@ -1,0 +1,32 @@
+{
+  "tracks": {
+    "href": "https://api.spotify.com/v1/me/shows?offset=0&limit=50",
+    "limit": 50,
+    "next": "https://api.spotify.com/v1/me/shows?offset=1&limit=1",
+    "offset": 0,
+    "previous": "https://api.spotify.com/v1/me/shows?offset=1&limit=1",
+    "total": 4,
+    "items": [
+      {
+        "href": "string",
+        "id": "id_1",
+        "name": "Title_1"
+      },
+      {
+        "href": "string",
+        "id": "id_2",
+        "name": "Title_2"
+      },
+      {
+        "href": "string",
+        "id": "id_3",
+        "name": "Title_3"
+      },
+      {
+        "href": "string",
+        "id": "id_4",
+        "name": "Title_4"
+      }
+    ]
+  }
+}
