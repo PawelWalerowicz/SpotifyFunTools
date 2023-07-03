@@ -1,4 +1,4 @@
-package walerowicz.pawel.SpotifyFun.playlist.concurrent;
+package walerowicz.pawel.SpotifyFun.playlist.concurrent.search;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +9,7 @@ import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
@@ -19,13 +20,16 @@ import java.util.stream.Collectors;
 public class ConcurrentRequestProcessor {
     @Value("${spotify.combinator.cleanup.regex}")
     private final String cleanupRegex;
+    private ConcurrentSearchFactory concurrentSearchFactory;
     private Set<ConcurrentSearch> concurrentSearches;
 
-    public void sendConcurrentRequests(final List<String> allQueries,
-                                       final String token,
-                                       final Set<TracksWithPhrase> outputSet) {
-        prepareConcurrentRequests(allQueries, token, outputSet);
+    public Set<TracksWithPhrase> sendConcurrentRequests(final List<String> allQueries,
+                                       final String token) {
+        final var outputSet = new CopyOnWriteArraySet<TracksWithPhrase>();
+        this.concurrentSearchFactory = new ConcurrentSearchFactory(cleanupRegex, token, outputSet);
+        prepareConcurrentRequests(allQueries);
         sendRequests();
+        return outputSet;
     }
 
     public void stopSendingRequests() {
@@ -33,11 +37,9 @@ public class ConcurrentRequestProcessor {
         log.info("Request processor has stopped.");
     }
 
-    private void prepareConcurrentRequests(final List<String> allQueries,
-                                           final String token,
-                                           final Set<TracksWithPhrase> outputSet) {
+    private void prepareConcurrentRequests(final List<String> allQueries) {
         concurrentSearches = allQueries.stream()
-                .map(query -> new ConcurrentSearch(query, token, cleanupRegex, outputSet))
+                .map(concurrentSearchFactory::buildConcurrentSearch)
                 .collect(Collectors.toSet());
     }
 

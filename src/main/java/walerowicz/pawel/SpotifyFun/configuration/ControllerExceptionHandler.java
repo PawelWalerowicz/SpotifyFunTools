@@ -9,8 +9,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import walerowicz.pawel.SpotifyFun.authorization.AuthorizationException;
-import walerowicz.pawel.SpotifyFun.playlist.combinations.CombinationNotFoundException;
-import walerowicz.pawel.SpotifyFun.playlist.concurrent.TooManyRequestsException;
+import walerowicz.pawel.SpotifyFun.playlist.TracksNotFoundException;
+import walerowicz.pawel.SpotifyFun.playlist.concurrent.search.TooManyRequestsException;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public class ControllerExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiCallProblem> missingBodyProblem() {
         return new ResponseEntity<>(
-                new ApiCallProblem("Request must contain a body with playlist name, sentence to map and valid authorization token."),
+                new ApiCallProblem("Request must contain a body with playlist name, sentence to transform and valid authorization token."),
                 responseHeaders,
                 HttpStatus.BAD_REQUEST);
     }
@@ -51,7 +51,7 @@ public class ControllerExceptionHandler {
                 HttpStatus.TOO_MANY_REQUESTS);
     }
 
-    @ExceptionHandler(CombinationNotFoundException.class)
+    @ExceptionHandler(TracksNotFoundException.class)
     public ResponseEntity<ApiCallProblem> cantFoundCombinationsException() {
         return new ResponseEntity<>(
                 new ApiCallProblem("This algorithm failed to find exact match for given sentence. " +

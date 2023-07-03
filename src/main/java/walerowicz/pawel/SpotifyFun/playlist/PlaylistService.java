@@ -2,14 +2,16 @@ package walerowicz.pawel.SpotifyFun.playlist;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+import walerowicz.pawel.SpotifyFun.authorization.AuthorizationException;
 import walerowicz.pawel.SpotifyFun.authorization.entites.User;
 import walerowicz.pawel.SpotifyFun.playlist.combinations.CombinationMatcher;
-import walerowicz.pawel.SpotifyFun.playlist.entities.Playlist;
-import walerowicz.pawel.SpotifyFun.playlist.entities.PlaylistRequest;
-import walerowicz.pawel.SpotifyFun.playlist.entities.PlaylistUrl;
-import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
+import walerowicz.pawel.SpotifyFun.playlist.concurrent.search.TooManyRequestsException;
+import walerowicz.pawel.SpotifyFun.playlist.entities.*;
+import walerowicz.pawel.SpotifyFun.user.UserService;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -37,10 +39,13 @@ class PlaylistService {
         final var user = userService.importUser(token);
         log.info("Creating playlist '{}' from sentence '{}'", playlistName, inputSentence);
         final var combinationTracks = combinationMatcher.findCombinationWithMatchingTracks(inputSentence, token);
+        if (combinationTracks.size() == 0) {
+            throw new TracksNotFoundException("Couldn't find trucks for given input sentence");
+        }
         final var playlist = createNewPlaylist(playlistName, token, user);
-        logExecutionTime(start);
         final var finalTracks = chooseRandomMatchingTracks(combinationTracks);
-        fillToPlaylist(playlist, finalTracks, token);
+        addTracksToPlaylist(playlist, finalTracks, token);
+        logExecutionTime(start);
         return new PlaylistUrl(playlist.externalUrls().url());
     }
 
@@ -52,21 +57,37 @@ class PlaylistService {
                 .uri(builder -> builder.path(CREATE_PLAYLIST_URI).build(user.id()))
                 .headers(httpHeaders -> httpHeaders.setBearerAuth(token))
                 .bodyValue(Collections.singletonMap("name", playlistName))
-                .retrieve()
-                .bodyToMono(Playlist.class)
+                .exchangeToMono(response -> {
+                    final var httpStatusCode = response.statusCode();
+                    if (httpStatusCode.equals(HttpStatus.TOO_MANY_REQUESTS)) {
+                        return Mono.error(new TooManyRequestsException());
+                    } else if (httpStatusCode.equals(HttpStatus.UNAUTHORIZED)) {
+                        return Mono.error(new AuthorizationException("Web token expired"));
+                    } else {
+                        return response.bodyToMono(Playlist.class);
+                    }
+                })
                 .block();
     }
 
-    private void fillToPlaylist(final Playlist playlist,
-                                final List<String> finalTracks,
-                                final String token) {
+    private void addTracksToPlaylist(final Playlist playlist,
+                                     final List<String> finalTracks,
+                                     final String token) {
         webClient
                 .post()
                 .uri(builder -> builder.path(ADD_ITEM_TO_PLAYLIST_URI).build(playlist.id()))
                 .headers(httpHeaders -> httpHeaders.setBearerAuth(token))
                 .bodyValue(finalTracks)
-                .retrieve()
-                .toBodilessEntity()
+                .exchangeToMono(response -> {
+                    final var httpStatusCode = response.statusCode();
+                    if (httpStatusCode.equals(HttpStatus.TOO_MANY_REQUESTS)) {
+                        return Mono.error(new TooManyRequestsException());
+                    } else if (httpStatusCode.equals(HttpStatus.UNAUTHORIZED)) {
+                        return Mono.error(new AuthorizationException("Web token expired"));
+                    } else {
+                        return response.toBodilessEntity();
+                    }
+                })
                 .block();
     }
 

@@ -1,6 +1,8 @@
-package walerowicz.pawel.SpotifyFun.playlist.concurrent;
+package walerowicz.pawel.SpotifyFun.playlist.concurrent.search;
 
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
@@ -20,27 +22,29 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
+@EqualsAndHashCode
+@ToString
 @Slf4j
 class ConcurrentSearch implements Runnable {
     //configuration fields
-    private static final String SEARCH_URI = "https://api.spotify.com/v1/search";
     private static final int SINGLE_FETCH_AMOUNT = 50;  //max acceptable by API=50
-    private static final int ATTEMPTS_LIMIT = 50;
     private static final int BUFFER_LIMIT_BYTES = 16 * 1024 * 1024;    //16MB
-    private static final int WAIT_PERIOD_MS =5000;    //5s
 
     //constant fields
     private final String query;
-    private final String token;
+    private final String searchUrl;
     private final String cleanupRegex;
+    private final String token;
     private final Set<TracksWithPhrase> outputSet;
+    private final int attemptsLimit;
+    private final int waitPeriodMs;
 
     //post-construct fields
     private String encodedQuery;
     private WebClient webClient;
 
     //state fields
-    private boolean shouldShutdown;
+    private boolean isRunning;
     private List<Track> matches;
     private int attemptCounter;
 
@@ -52,13 +56,17 @@ class ConcurrentSearch implements Runnable {
     }
 
     void shutDown() {
-        shouldShutdown = true;
+        isRunning = false;
+    }
+
+    boolean isRunning() {
+        return isRunning;
     }
 
     private List<Track> searchForTracks() {
         initState();
         do {
-            log.info("Searching for '{}' ({} attempt)", query, attemptCounter);
+            log.debug("Searching for '{}' ({} attempt)", query, attemptCounter);
             try {
                 var fetchTracksResult = fetchTracks();
                 filterTracks(fetchTracksResult);
@@ -76,7 +84,7 @@ class ConcurrentSearch implements Runnable {
         initializeWebClient();
         attemptCounter = 1;
         matches = new ArrayList<>();
-        shouldShutdown = false;
+        isRunning = true;
     }
 
     private void setEncodedQuery() {
@@ -89,7 +97,7 @@ class ConcurrentSearch implements Runnable {
 
     private void initializeWebClient() {
         this.webClient = WebClient.builder()
-                .baseUrl(SEARCH_URI)
+                .baseUrl(searchUrl)
                 .defaultHeaders(header -> {
                     header.setContentType(MediaType.APPLICATION_JSON);
                     header.setBearerAuth(token);
@@ -143,14 +151,14 @@ class ConcurrentSearch implements Runnable {
 
     private boolean shouldContinue() {
         return matches.isEmpty()
-                && attemptCounter <= ATTEMPTS_LIMIT
-                && !shouldShutdown;
+                && attemptCounter < attemptsLimit
+                && isRunning;
     }
 
     private void logAndWait() {
-        log.info("Exceeded request limit for {}, trying again in {} seconds", query, WAIT_PERIOD_MS/1000);
+        log.info("Exceeded request limit for {}, trying again in {} seconds", query, waitPeriodMs /1000);
         try {
-            Thread.sleep(WAIT_PERIOD_MS);
+            Thread.sleep(waitPeriodMs);
         } catch (InterruptedException ignored) {
         }
     }

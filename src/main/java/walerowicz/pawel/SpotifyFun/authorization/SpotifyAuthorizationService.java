@@ -12,7 +12,7 @@ import reactor.core.publisher.Mono;
 import walerowicz.pawel.SpotifyFun.configuration.ClientSecretLoader;
 import walerowicz.pawel.SpotifyFun.authorization.entites.SpotifyAccessToken;
 import walerowicz.pawel.SpotifyFun.authorization.entites.TokenRequest;
-import walerowicz.pawel.SpotifyFun.playlist.concurrent.TooManyRequestsException;
+import walerowicz.pawel.SpotifyFun.playlist.concurrent.search.TooManyRequestsException;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -61,13 +61,13 @@ public class SpotifyAuthorizationService {
     }
 
     @PostConstruct
-    private void setEncodedAuthorizationCredentials() {
+    void setEncodedAuthorizationCredentials() {
         final var plainClientCredentials = clientId + ":" + clientSecretLoader.loadSpotifyClientSecret();
         this.encodedCredentials =  Base64.getEncoder().encodeToString(plainClientCredentials.getBytes());
     }
 
     @PostConstruct
-    private void setAuthorizationCodeURL() {
+    void setAuthorizationCodeURL() {
         this.authorizationCodeURL = AUTH_URI + "?" + tryBuildParams();
     }
 

@@ -3,7 +3,8 @@ package walerowicz.pawel.SpotifyFun.playlist.combinations;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import walerowicz.pawel.SpotifyFun.playlist.concurrent.ConcurrentRequestProcessor;
+import walerowicz.pawel.SpotifyFun.playlist.TracksNotFoundException;
+import walerowicz.pawel.SpotifyFun.playlist.concurrent.search.ConcurrentRequestProcessor;
 import walerowicz.pawel.SpotifyFun.playlist.entities.Combination;
 import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
 
@@ -25,14 +26,14 @@ public class CombinationMatcher {
     public List<TracksWithPhrase> findCombinationWithMatchingTracks(final String inputSentence, final String token) {
         final var combinations = wordCombiner.buildCombinations(inputSentence);
         final var allQueries = wordCombiner.distinctQueries(combinations);
-        final var allMatchingTracks = new CopyOnWriteArraySet<TracksWithPhrase>();
-        concurrentRequestProcessor.sendConcurrentRequests(allQueries, token, allMatchingTracks);
+        final var allMatchingTracks = concurrentRequestProcessor.sendConcurrentRequests(allQueries, token);
         List<Combination> workingCombinations;
         do {
             workingCombinations = filterWorkingCombinations(combinations, allMatchingTracks);
             waitBetweenChecks();
         } while (workingCombinations.isEmpty());
         concurrentRequestProcessor.stopSendingRequests();
+        log.info("Found {} matching combinations", workingCombinations.size());
         final var chosenCombination = chooseTightestCombination(workingCombinations);
         final var combinationPhrases = chosenCombination.getPhraseList();
         log.info("Shortest found combination: {}", combinationPhrases);
@@ -61,10 +62,10 @@ public class CombinationMatcher {
                 .collect(Collectors.toSet());
     }
 
-    private Combination chooseTightestCombination(List<Combination> workingCombinations) throws CombinationNotFoundException {
+    private Combination chooseTightestCombination(List<Combination> workingCombinations) {
         return workingCombinations.stream()
                 .min(Combination::compareTo)
-                .orElseThrow(() -> new CombinationNotFoundException("Couldn't find combination for given input sentence"));
+                .orElseThrow(() -> new TracksNotFoundException("Couldn't find combination for given input sentence"));
     }
 
     private boolean allMatchingTracksFound(final Combination combination, final Set<String> tracksPhrases) {
@@ -81,7 +82,7 @@ public class CombinationMatcher {
         return tracksWithPhrase.stream()
                 .filter(tracks -> tracks.phrase().equalsIgnoreCase(phrase))
                 .findFirst()
-                .orElseThrow(() -> new CombinationNotFoundException("Couldn't find combination for given input sentence"));
+                .orElseThrow(() -> new TracksNotFoundException("Couldn't find combination for given input sentence"));
     }
 
     private void waitBetweenChecks() {

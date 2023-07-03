@@ -1,4 +1,4 @@
-package walerowicz.pawel.SpotifyFun.playlist;
+package walerowicz.pawel.SpotifyFun.user;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -7,16 +7,16 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import walerowicz.pawel.SpotifyFun.authorization.AuthorizationException;
 import walerowicz.pawel.SpotifyFun.authorization.entites.User;
-import walerowicz.pawel.SpotifyFun.playlist.concurrent.TooManyRequestsException;
+import walerowicz.pawel.SpotifyFun.playlist.concurrent.search.TooManyRequestsException;
 
 @Service
 @RequiredArgsConstructor
-class UserService {
+public class UserService {
     private static final String GET_USER_ENDPOINT = "me";
 
     private final WebClient webClient;
 
-    User importUser(String token) {
+    public User importUser(final String token) {
         return webClient
                 .get()
                 .uri(GET_USER_ENDPOINT)
