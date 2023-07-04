@@ -38,6 +38,7 @@ class ConcurrentSearch implements Runnable {
     private final Set<TracksWithPhrase> outputSet;
     private final int attemptsLimit;
     private final int waitPeriodMs;
+    private final Sleeper sleeper;
 
     //post-construct fields
     private String encodedQuery;
@@ -151,15 +152,12 @@ class ConcurrentSearch implements Runnable {
 
     private boolean shouldContinue() {
         return matches.isEmpty()
-                && attemptCounter < attemptsLimit
+                && attemptCounter <= attemptsLimit
                 && isRunning;
     }
 
     private void logAndWait() {
-        log.info("Exceeded request limit for {}, trying again in {} seconds", query, waitPeriodMs /1000);
-        try {
-            Thread.sleep(waitPeriodMs);
-        } catch (InterruptedException ignored) {
-        }
+        log.info("Exceeded request limit for {}, trying again in {} seconds", query, waitPeriodMs / 1000);
+        sleeper.sleep(waitPeriodMs);
     }
 }

@@ -16,7 +16,16 @@ public class ConcurrentSearchFactory {
     private final Set<TracksWithPhrase> outputSet;
 
 
-    public ConcurrentSearch buildConcurrentSearch(String query) {
-        return new ConcurrentSearch(query, SEARCH_URI, cleanupRegex, token, outputSet, ATTEMPTS_LIMIT, WAIT_PERIOD_MS);
+    public ConcurrentSearch buildConcurrentSearch(final String query) {
+        return new ConcurrentSearch(
+                query,
+                SEARCH_URI,
+                cleanupRegex,
+                token,
+                outputSet,
+                ATTEMPTS_LIMIT,
+                WAIT_PERIOD_MS,
+                new Sleeper()
+        );
     }
 }

@@ -11,7 +11,6 @@ import walerowicz.pawel.SpotifyFun.playlist.entities.TracksWithPhrase;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
 
 @Service

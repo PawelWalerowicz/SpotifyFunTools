@@ -3,8 +3,7 @@ package walerowicz.pawel.SpotifyFun.playlist.concurrent.search;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import walerowicz.pawel.SpotifyFun.authorization.AuthorizationException;
@@ -15,31 +14,26 @@ import java.util.HashSet;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
 
 class ConcurrentSearchTest {
 
-    private ConcurrentSearch concurrentSearch;
     private String mockURL;
     private final String token = "test-token";
     private final String regexCleanup = "[! .,-]";
     private final String trackResponse = getResource();
 
-    private static MockWebServer mockWebServer;
-
-    @BeforeAll
-    static void setUp() throws IOException {
-        mockWebServer = new MockWebServer();
-        mockWebServer.start();
-    }
+    private MockWebServer mockWebServer;
 
     @BeforeEach
-    void reset() {
+    void reset() throws IOException {
+        mockWebServer = new MockWebServer();
+        mockWebServer.start();
         mockURL = String.format("http://localhost:%s", mockWebServer.getPort());
     }
 
-    @AfterAll
-    static void tearDown() throws IOException {
+    @AfterEach
+    void shutDown() throws IOException {
         mockWebServer.shutdown();
     }
 
@@ -59,15 +53,15 @@ class ConcurrentSearchTest {
 
     @Test
     void shouldInitializeObjectInNotRunningState() {
-        concurrentSearch = new ConcurrentSearch("query1", mockURL, "", token, new HashSet<>(), 1, 0);
+        final var concurrentSearch = new ConcurrentSearch("query1", mockURL, regexCleanup, token, new HashSet<>(), 1, 0, new Sleeper());
         assertFalse(concurrentSearch.isRunning());
     }
 
     @Test
     void shouldChangeStateToIsRunningWhenRunWasCalled() {
         final var query = "query1";
-        final var attemptLimit = 17;
-        concurrentSearch = new ConcurrentSearch(query, mockURL, regexCleanup, token, new HashSet<>(), attemptLimit, 0);
+        final var attemptLimit = 31;
+        final var concurrentSearch = new ConcurrentSearch(query, mockURL, regexCleanup, token, new HashSet<>(), attemptLimit, 0, new Sleeper());
         MockResponse mockResponse = new MockResponse()
                 .addHeader("Content-Type", "application/json")
                 .setBody(trackResponse)
@@ -81,8 +75,8 @@ class ConcurrentSearchTest {
     @Test
     void shouldChangeStateToNotRunningWhenShutDownWasCalled() {
         final var query = "query1";
-        final var attemptLimit = 17;
-        concurrentSearch = new ConcurrentSearch(query, mockURL, regexCleanup, token, new HashSet<>(), attemptLimit, 0);
+        final var attemptLimit = 21;
+        final var concurrentSearch = new ConcurrentSearch(query, mockURL, regexCleanup, token, new HashSet<>(), attemptLimit, 0, new Sleeper());
         MockResponse mockResponse = new MockResponse()
                 .addHeader("Content-Type", "application/json")
                 .setBody(trackResponse)
@@ -97,8 +91,8 @@ class ConcurrentSearchTest {
     @Test
     void shouldNotSendMoreRequestsThanGivenAttemptLimitEvenIfNoMatchIsFound() {
         final var query = "query1";
-        final var attemptLimit = 17;
-        concurrentSearch = new ConcurrentSearch(query, mockURL, regexCleanup, token, new HashSet<>(), attemptLimit, 0);
+        final var attemptLimit = 13;
+        final var concurrentSearch = new ConcurrentSearch(query, mockURL, regexCleanup, token, new HashSet<>(), attemptLimit, 0, new Sleeper());
         MockResponse mockResponse = new MockResponse()
                 .addHeader("Content-Type", "application/json")
                 .setBody(trackResponse)
@@ -113,7 +107,7 @@ class ConcurrentSearchTest {
     void shouldNotSendMoreRequestsWhenExactMatchIsFound() {
         final var query = "Title_2";
         final var attemptLimit = 50;
-        concurrentSearch = new ConcurrentSearch(query, mockURL, regexCleanup, token, new HashSet<>(), attemptLimit, 0);
+        final var concurrentSearch = new ConcurrentSearch(query, mockURL, regexCleanup, token, new HashSet<>(), attemptLimit, 0, new Sleeper());
         MockResponse mockResponse = new MockResponse()
                 .addHeader("Content-Type", "application/json")
                 .setBody(trackResponse)
@@ -128,23 +122,32 @@ class ConcurrentSearchTest {
     void shouldWaitGivenPeriodAndRetryWhenResponseStatusIs429() {
         final var query = "Title_2";
         final var attemptLimit = 20;
-        concurrentSearch = new ConcurrentSearch(query, mockURL, regexCleanup, token, new HashSet<>(), attemptLimit, 0);
-        final var mockResponse = new MockResponse()
+        final var waitPeriodMs = 1;
+        final var tooManyResponsesBeforeSuccess = 5;
+        final var sleeper = mock(Sleeper.class);
+        final var concurrentSearch = new ConcurrentSearch(query, mockURL, regexCleanup, token, new HashSet<>(), attemptLimit, waitPeriodMs, sleeper);
+        final var tooManyAttemptsResponse = new MockResponse()
                 .setResponseCode(429);
-        final var responses = Collections.nCopies(50, mockResponse);
+        final var responses = Collections.nCopies(tooManyResponsesBeforeSuccess, tooManyAttemptsResponse);
         responses.forEach(response -> mockWebServer.enqueue(response));
+        MockResponse successfulResponse = new MockResponse()
+                .addHeader("Content-Type", "application/json")
+                .setBody(trackResponse)
+                .setResponseCode(200);
+        mockWebServer.enqueue(successfulResponse);
         concurrentSearch.run();
+        verify(sleeper, times(tooManyResponsesBeforeSuccess)).sleep(waitPeriodMs);
     }
 
     @Test
     void shouldThrowAuthorizationExceptionIfResponseStatusIs401() {
         final var query = "Title_2";
         final var attemptLimit = 50;
-        concurrentSearch = new ConcurrentSearch(query, mockURL, regexCleanup, token, new HashSet<>(), attemptLimit, 0);
+        final var concurrentSearch = new ConcurrentSearch(query, mockURL, regexCleanup, token, new HashSet<>(), attemptLimit, 0, new Sleeper());
         final var mockResponse = new MockResponse()
                 .setResponseCode(401);
         mockWebServer.enqueue(mockResponse);
 
-        assertThrows(AuthorizationException.class, () -> concurrentSearch.run());
+        assertThrows(AuthorizationException.class, concurrentSearch::run);
     }
 }
