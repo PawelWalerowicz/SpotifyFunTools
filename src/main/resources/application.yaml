@@ -6,6 +6,7 @@ spotify:
     filename: spotify-secret
   uri:
     redirect: http://localhost:9090/api/v1/auth/token
+  retry_wait_time_ms: 5000
   combinator:
     words:
       limit: 6
