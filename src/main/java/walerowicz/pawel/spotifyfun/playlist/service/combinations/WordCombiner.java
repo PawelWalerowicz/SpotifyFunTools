@@ -11,8 +11,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public
-class WordCombiner {
+public class WordCombiner {
     @Value("${spotify.combinator.words.limit}")
     private final int joinLimit;
     @Value("${spotify.combinator.cleanup.regex}")
@@ -30,14 +29,14 @@ class WordCombiner {
                 .map(Combination::getPhraseList)
                 .flatMap(Collection::stream)
                 .distinct()
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private List<String> splitSentence(final String inputSentence) {
         return Arrays.stream(inputSentence.split(cleanUpRegex))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private List<Combination> combine(final List<String> allWords) {

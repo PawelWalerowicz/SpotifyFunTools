@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CombinationMatcher {
     private static final int WAIT_PERIOD_MS = 1000; // 1s
+    private static final int MAX_FETCHING_PERIODS = 30; // 30s
 
     private final ConcurrentRequestProcessor concurrentRequestProcessor;
     private final WordCombiner wordCombiner;
@@ -33,16 +34,23 @@ public class CombinationMatcher {
     private List<Combination> checkUntilMatchIsFound(final List<Combination> combinations,
                                                      final Set<TracksWithPhrase> allMatchingTracks) {
         List<Combination> workingCombinations;
+        int attempt = 1;
         do {
             workingCombinations = filterWorkingCombinations(combinations, allMatchingTracks);
             log.info("Found {} working combinations.", workingCombinations.size());
             if (workingCombinations.isEmpty()) {
                 Sleeper.sleep(WAIT_PERIOD_MS);
+                attempt++;
             }
-        } while (workingCombinations.isEmpty());
+        } while (shouldContinue(workingCombinations, attempt));
         concurrentRequestProcessor.stopSendingRequests();
         log.info("Found {} matching combinations", workingCombinations.size());
         return workingCombinations;
+    }
+
+    private boolean shouldContinue(final List<Combination> workingCombinations,
+                                   final int attempt) {
+        return workingCombinations.isEmpty() && attempt <= MAX_FETCHING_PERIODS;
     }
 
     private List<Combination> filterWorkingCombinations(final List<Combination> combinedWords,
