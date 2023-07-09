@@ -60,7 +60,7 @@ public class ControllerExceptionHandler {
     @ExceptionHandler(TracksNotFoundException.class)
     public ResponseEntity<ApiCallProblem> cantFoundCombinationsException() {
         return new ResponseEntity<>(
-                new ApiCallProblem("This algorithm failed to find exact match for given sentence. " +
+                new ApiCallProblem("Algorithm failed to find exact match for given sentence. " +
                         "Please check if it contains any misspelled words and/or consider shorter request."),
                 DEFAULT_RESPONSE_HEADERS,
                 HttpStatus.UNPROCESSABLE_ENTITY);

@@ -9,7 +9,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import walerowicz.pawel.spotifyfun.authorization.exception.AuthorizationException;
 import walerowicz.pawel.spotifyfun.playlist.entity.FetchTracksResult;
 import walerowicz.pawel.spotifyfun.playlist.entity.FoundTracksResultPackage;
 import walerowicz.pawel.spotifyfun.playlist.entity.Track;
@@ -20,7 +19,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @EqualsAndHashCode
@@ -58,6 +56,7 @@ class ConcurrentSearch implements Runnable {
 
     void shutDown() {
         isRunning = false;
+        Thread.currentThread().interrupt();
     }
 
     boolean isRunning() {
@@ -124,7 +123,9 @@ class ConcurrentSearch implements Runnable {
                     if (httpStatusCode.equals(HttpStatus.TOO_MANY_REQUESTS)) {
                         return Mono.error(new TooManyRequestsException());
                     } else if (httpStatusCode.equals(HttpStatus.UNAUTHORIZED)) {
-                        return Mono.error(new AuthorizationException("Web token expired"));
+                        log.info("Web token expired - requests stopped.");
+                        shutDown();
+                        return Mono.empty();
                     } else {
                         return response.bodyToMono(FetchTracksResult.class);
                     }
@@ -143,7 +144,7 @@ class ConcurrentSearch implements Runnable {
                 .orElseGet(Collections::emptyList)
                 .stream()
                 .filter(this::trackNameIsExactMatch)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private boolean trackNameIsExactMatch(final Track track) {
