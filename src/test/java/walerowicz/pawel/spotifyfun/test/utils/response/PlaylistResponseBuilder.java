@@ -1,7 +1,7 @@
-package walerowicz.pawel.spotifyfun.playlist.test.utils.response;
+package walerowicz.pawel.spotifyfun.test.utils.response;
 
 import okhttp3.mockwebserver.MockResponse;
-import walerowicz.pawel.spotifyfun.playlist.test.utils.ResourceLoader;
+import walerowicz.pawel.spotifyfun.test.utils.ResourceLoader;
 
 public class PlaylistResponseBuilder {
     private String bodyJson = "{}";

@@ -1,11 +1,12 @@
 package walerowicz.pawel.spotifyfun.configuration;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import walerowicz.pawel.spotifyfun.authorization.exception.AuthorizationException;
@@ -15,31 +16,36 @@ import walerowicz.pawel.spotifyfun.playlist.exception.TooManyRequestsException;
 import java.util.List;
 
 @RestControllerAdvice
-@RequiredArgsConstructor
 public class ControllerExceptionHandler {
-    private final HttpHeaders responseHeaders;
+    private static final HttpHeaders DEFAULT_RESPONSE_HEADERS = setDefaultResponseHeaders();
+
+    private static HttpHeaders setDefaultResponseHeaders() {
+        final var headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
+    }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiCallProblem> missingBodyProblem() {
+    public ResponseEntity<ApiCallProblem> invalidBodyException() {
         return new ResponseEntity<>(
                 new ApiCallProblem("Request must contain a body with playlist name, sentence to transform and valid authorization token."),
-                responseHeaders,
+                DEFAULT_RESPONSE_HEADERS,
                 HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<List<ApiCallProblem>> missingBodyProblem(final MethodArgumentNotValidException exception) {
+    public ResponseEntity<List<ApiCallProblem>> invalidBodyException(final MethodArgumentNotValidException exception) {
         return new ResponseEntity<>(
-                ApiCallProblem.fromBindException(exception),
-                responseHeaders,
+                ApiCallProblemBuilder.fromBindException(exception),
+                DEFAULT_RESPONSE_HEADERS,
                 HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(AuthorizationException.class)
     public ResponseEntity<ApiCallProblem> unexpectedEncodingProblem(final AuthorizationException exception) {
         return new ResponseEntity<>(
-                ApiCallProblem.fromException(exception),
-                responseHeaders,
+                ApiCallProblemBuilder.fromException(exception),
+                DEFAULT_RESPONSE_HEADERS,
                 HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -47,7 +53,7 @@ public class ControllerExceptionHandler {
     public ResponseEntity<ApiCallProblem> tooManyRequestsProblem() {
         return new ResponseEntity<>(
                 new ApiCallProblem("Exceeded number of allowed calls to Spotify API. Please try again later."),
-                responseHeaders,
+                DEFAULT_RESPONSE_HEADERS,
                 HttpStatus.TOO_MANY_REQUESTS);
     }
 
@@ -56,8 +62,16 @@ public class ControllerExceptionHandler {
         return new ResponseEntity<>(
                 new ApiCallProblem("This algorithm failed to find exact match for given sentence. " +
                         "Please check if it contains any misspelled words and/or consider shorter request."),
-                responseHeaders,
+                DEFAULT_RESPONSE_HEADERS,
                 HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiCallProblem> requestError(final MissingServletRequestParameterException exception) {
+        return new ResponseEntity<>(
+                ApiCallProblemBuilder.fromException(exception),
+                DEFAULT_RESPONSE_HEADERS,
+                HttpStatus.BAD_REQUEST);
     }
 
 }

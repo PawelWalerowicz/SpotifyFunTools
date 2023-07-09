@@ -18,8 +18,8 @@ import walerowicz.pawel.spotifyfun.playlist.entity.TracksWithPhrase;
 import walerowicz.pawel.spotifyfun.playlist.exception.TooManyRequestsException;
 import walerowicz.pawel.spotifyfun.playlist.exception.TracksNotFoundException;
 import walerowicz.pawel.spotifyfun.playlist.service.combinations.CombinationMatcher;
-import walerowicz.pawel.spotifyfun.playlist.test.utils.response.PlaylistResponseBuilder;
-import walerowicz.pawel.spotifyfun.playlist.test.utils.response.TracksWithPhrasesTestBuilder;
+import walerowicz.pawel.spotifyfun.test.utils.response.PlaylistResponseBuilder;
+import walerowicz.pawel.spotifyfun.test.utils.response.TracksWithPhrasesTestBuilder;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

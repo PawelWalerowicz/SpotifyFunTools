@@ -1,4 +1,4 @@
-package walerowicz.pawel.spotifyfun.playlist.test.utils;
+package walerowicz.pawel.spotifyfun.test.utils;
 
 import org.jetbrains.annotations.NotNull;
 

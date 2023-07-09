@@ -27,11 +27,4 @@ public class ApplicationConfiguration {
                 .defaultHeaders(header -> header.setContentType(MediaType.APPLICATION_FORM_URLENCODED))
                 .build();
     }
-
-    @Bean
-    public HttpHeaders defaultResponseHeaders() {
-        final var headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return headers;
-    }
 }

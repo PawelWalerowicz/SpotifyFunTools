@@ -2,6 +2,8 @@ package walerowicz.pawel.spotifyfun.playlist.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,10 +18,10 @@ import walerowicz.pawel.spotifyfun.playlist.service.PlaylistService;
 @RequiredArgsConstructor
 @Validated
 public class PlaylistController {
-    private final PlaylistService spotifyService;
+    private final PlaylistService playlistService;
 
     @PostMapping("/playlist/new")
-    public PlaylistUrl createPlaylist(@RequestBody @Valid final PlaylistRequest playlistRequest) {
-        return spotifyService.buildPlaylist(playlistRequest);
+    public ResponseEntity<PlaylistUrl> createPlaylist(@RequestBody @Valid final PlaylistRequest playlistRequest) {
+        return new ResponseEntity<>(playlistService.buildPlaylist(playlistRequest), HttpStatus.CREATED);
     }
 }

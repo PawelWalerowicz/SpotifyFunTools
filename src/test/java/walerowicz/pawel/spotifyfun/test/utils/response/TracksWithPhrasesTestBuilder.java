@@ -1,4 +1,4 @@
-package walerowicz.pawel.spotifyfun.playlist.test.utils.response;
+package walerowicz.pawel.spotifyfun.test.utils.response;
 
 import walerowicz.pawel.spotifyfun.playlist.entity.Track;
 import walerowicz.pawel.spotifyfun.playlist.entity.TracksWithPhrase;

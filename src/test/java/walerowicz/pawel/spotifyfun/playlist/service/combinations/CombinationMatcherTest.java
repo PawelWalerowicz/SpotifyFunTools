@@ -7,7 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import walerowicz.pawel.spotifyfun.playlist.entity.Combination;
 import walerowicz.pawel.spotifyfun.playlist.service.search.ConcurrentRequestProcessor;
-import walerowicz.pawel.spotifyfun.playlist.test.utils.response.TracksWithPhrasesTestBuilder;
+import walerowicz.pawel.spotifyfun.test.utils.response.TracksWithPhrasesTestBuilder;
 
 import java.util.List;
 
