@@ -1,26 +1,23 @@
 package walerowicz.pawel.spotifyfun.playlist.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
-import walerowicz.pawel.spotifyfun.authorization.controller.AuthorizationController;
-import walerowicz.pawel.spotifyfun.authorization.service.SpotifyAuthorizationService;
-import walerowicz.pawel.spotifyfun.playlist.entity.Playlist;
+import walerowicz.pawel.spotifyfun.authorization.exception.AuthorizationException;
 import walerowicz.pawel.spotifyfun.playlist.entity.PlaylistRequest;
 import walerowicz.pawel.spotifyfun.playlist.entity.PlaylistUrl;
+import walerowicz.pawel.spotifyfun.playlist.exception.TooManyRequestsException;
+import walerowicz.pawel.spotifyfun.playlist.exception.TracksNotFoundException;
 import walerowicz.pawel.spotifyfun.playlist.service.PlaylistService;
 
-import java.net.http.HttpHeaders;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = PlaylistController.class)
 class PlaylistControllerTest {
@@ -71,5 +68,69 @@ class PlaylistControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void shouldReturnApiCallProblemWithStatusBadRequestAndInformationAboutMissingBody() throws Exception {
+        final var resultBody = "{\"Error message\":\"Request must contain a body with playlist name, sentence to transform and valid authorization token.\"}";
+        mockMvc.perform(
+                        post("/api/v1/playlist/new")
+                                .contentType("application/json")
+                )
+                .andExpect(content().json(resultBody))
+                .andExpect(status().isBadRequest());
+    }
 
+    @Test
+    void shouldReturnApiCallProblemWithStatusUnauthorizedAndProperMessageWhenTokenIsExpired() throws Exception {
+        when(playlistService.buildPlaylist(any(PlaylistRequest.class))).thenThrow(new AuthorizationException("Web token expired"));
+        final var requestBody = "{" +
+                "\"name\":\"test-name\"," +
+                "\"sentence\":\"Input sentence\"," +
+                "\"token\":\"test-token\"" +
+                "}";
+        final var resultBody = "{\"Error message\":\"Web token expired\"}";
+        mockMvc.perform(
+                        post("/api/v1/playlist/new")
+                                .contentType("application/json")
+                                .content(requestBody)
+                )
+                .andExpect(content().json(resultBody))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldReturnApiCallProblemWithStatusTooManyRequestsAndProperMessageWhenAfterAllRepetitionsPlaylistCannotBeCreated() throws Exception {
+        when(playlistService.buildPlaylist(any(PlaylistRequest.class))).thenThrow(new TooManyRequestsException());
+        final var requestBody = "{" +
+                "\"name\":\"test-name\"," +
+                "\"sentence\":\"Input sentence\"," +
+                "\"token\":\"test-token\"" +
+                "}";
+        final var resultBody = "{\"Error message\":\"Exceeded number of allowed calls to Spotify API. Please try again later.\"}";
+        mockMvc.perform(
+                        post("/api/v1/playlist/new")
+                                .contentType("application/json")
+                                .content(requestBody)
+                )
+                .andExpect(content().json(resultBody))
+                .andExpect(status().isTooManyRequests());
+    }
+
+    @Test
+    void shouldReturnApiCallProblemWithStatusUnprocessableEntityAndProperMessageWhenServiceThrowsTracksNotFoundException() throws Exception {
+        when(playlistService.buildPlaylist(any(PlaylistRequest.class))).thenThrow(new TracksNotFoundException("test message"));
+        final var requestBody = "{" +
+                "\"name\":\"test-name\"," +
+                "\"sentence\":\"Input sentence\"," +
+                "\"token\":\"test-token\"" +
+                "}";
+        final var resultBody = "{\"Error message\":\"This algorithm failed to find exact match for given sentence. " +
+                "Please check if it contains any misspelled words and/or consider shorter request.\"}";
+        mockMvc.perform(
+                        post("/api/v1/playlist/new")
+                                .contentType("application/json")
+                                .content(requestBody)
+                )
+                .andExpect(content().json(resultBody))
+                .andExpect(status().isUnprocessableEntity());
+    }
 }

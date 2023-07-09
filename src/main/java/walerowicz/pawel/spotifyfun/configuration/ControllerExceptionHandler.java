@@ -26,7 +26,7 @@ public class ControllerExceptionHandler {
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiCallProblem> invalidBodyException() {
+    public ResponseEntity<ApiCallProblem> missingBodyException() {
         return new ResponseEntity<>(
                 new ApiCallProblem("Request must contain a body with playlist name, sentence to transform and valid authorization token."),
                 DEFAULT_RESPONSE_HEADERS,
@@ -42,11 +42,11 @@ public class ControllerExceptionHandler {
     }
 
     @ExceptionHandler(AuthorizationException.class)
-    public ResponseEntity<ApiCallProblem> unexpectedEncodingProblem(final AuthorizationException exception) {
+    public ResponseEntity<ApiCallProblem> authorizationException(final AuthorizationException exception) {
         return new ResponseEntity<>(
                 ApiCallProblemBuilder.fromException(exception),
                 DEFAULT_RESPONSE_HEADERS,
-                HttpStatus.INTERNAL_SERVER_ERROR);
+                HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(TooManyRequestsException.class)
