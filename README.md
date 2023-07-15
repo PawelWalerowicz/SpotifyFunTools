@@ -98,4 +98,4 @@ HTTP/1.1 400/401/429/422
 
 # Algorithm explanation
 Flow of the application algorithm is explained on the following diagram:
-![alt text](docs/algorithm.png)
+![alt text](docs/diagram.png?)
