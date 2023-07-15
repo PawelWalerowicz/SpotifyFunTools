@@ -51,7 +51,7 @@ public class WordCombiner {
     }
 
     private List<Combination> combineForJoinedWords(final int joinedWords, final List<String> allWords) {
-        final List<Combination> allSubLists = new ArrayList<>();
+        final var allSubLists = new ArrayList<Combination>();
         final var allWordsAmount = allWords.size();
         for (var startIndex = 0; startIndex < allWordsAmount + 1 - joinedWords; startIndex++) {
             int endIndex = startIndex + joinedWords;
@@ -66,7 +66,7 @@ public class WordCombiner {
     private List<Combination> flatMapWithLeadingAndTailing(final List<Combination> leadingCombinations,
                                                            final String joined,
                                                            final List<Combination> tailingCombinations) {
-        final List<Combination> solvedCombinations = new ArrayList<>();
+        final var solvedCombinations = new ArrayList<Combination>();
         for (var leadingCombination : leadingCombinations) {
             for (Combination tailingCombination : tailingCombinations) {
                 solvedCombinations.add(new Combination(leadingCombination, joined, tailingCombination));

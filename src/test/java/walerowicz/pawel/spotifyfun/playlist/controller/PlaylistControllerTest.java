@@ -123,7 +123,7 @@ class PlaylistControllerTest {
                 "\"sentence\":\"Input sentence\"," +
                 "\"token\":\"test-token\"" +
                 "}";
-        final var resultBody = "{\"Error message\":\"This algorithm failed to find exact match for given sentence. " +
+        final var resultBody = "{\"Error message\":\"Algorithm failed to find exact match for given sentence. " +
                 "Please check if it contains any misspelled words and/or consider shorter request.\"}";
         mockMvc.perform(
                         post("/api/v1/playlist/new")

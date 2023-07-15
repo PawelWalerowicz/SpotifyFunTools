@@ -3,6 +3,7 @@ package walerowicz.pawel.spotifyfun.authorization.service;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +49,6 @@ class UserServiceTest {
                 .setBody("{\"id\":\"Test user id\"}")
                 .setResponseCode(200);
         mockWebServer.enqueue(mockResponse);
-
         userService.fetchUser("test-token");
         RecordedRequest recordedRequest = mockWebServer.takeRequest();
         assertEquals("/me", recordedRequest.getPath());

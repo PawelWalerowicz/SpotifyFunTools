@@ -56,7 +56,6 @@ class ConcurrentSearch implements Runnable {
 
     void shutDown() {
         isRunning = false;
-        Thread.currentThread().interrupt();
     }
 
     boolean isRunning() {
