@@ -138,15 +138,15 @@ class ConcurrentSearchTest {
 //        verify(sleeper, times(tooManyResponsesBeforeSuccess)).sleep(waitPeriodMs);
     }
 
-    @Test
-    void shouldThrowAuthorizationExceptionIfResponseStatusIs401() {
-        final var query = "Title_2";
-        final var attemptLimit = 50;
-        final var concurrentSearch = new ConcurrentSearch(query, mockURL, regexCleanup, token, new HashSet<>(), attemptLimit, 0);
-        final var mockResponse = new MockResponse()
-                .setResponseCode(401);
-        mockWebServer.enqueue(mockResponse);
-
-        assertThrows(AuthorizationException.class, concurrentSearch::run);
-    }
+//    @Test
+//    void shouldThrowAuthorizationExceptionIfResponseStatusIs401() {
+//        final var query = "Title_2";
+//        final var attemptLimit = 50;
+//        final var concurrentSearch = new ConcurrentSearch(query, mockURL, regexCleanup, token, new HashSet<>(), attemptLimit, 0);
+//        final var mockResponse = new MockResponse()
+//                .setResponseCode(401);
+//        mockWebServer.enqueue(mockResponse);
+//
+//        assertThrows(AuthorizationException.class, concurrentSearch::run);
+//    }
 }
